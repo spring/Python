@@ -108,6 +108,7 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	set(myGeneratedDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
 	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
+
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
@@ -119,7 +120,11 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMENT "copying builder/ files to ${myBuilderDir}"
-		DEPENDS "builder/template/*.py"
+		DEPENDS
+			"builder/*.py"
+			"builder/template/*.py"
+			"builder/templates/*.c"
+			"builder/templates/*.py"
 		OUTPUT
 			"${myBuilderDir}/*.py"
 			"${myBuilderDir}/template/*.py"
