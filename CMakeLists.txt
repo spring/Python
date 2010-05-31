@@ -96,9 +96,6 @@ else    (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 	message ("warning: Python AI Interface will not be built!")
 endif	(PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 
-
-
-
 # Build
 if    (BUILD_PYTHON_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
@@ -110,24 +107,41 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	set(myGeneratedDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
+	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
 	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
+#copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
-	    COMMAND ${PYTHON_EXECUTABLE} ARGS "-B"
-	    "builder/generator.py"
-	    ${PROJECT_SOURCE_DIR}
-	    "builder/templates"
-	    ${myGeneratedDir}
-	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	    COMMENT " Generating Python Interface" VERBATIM
-	    OUTPUT "${myGeneratedDir}/ai.c"
-	    OUTPUT "${myGeneratedDir}/PyAI/interface.py"
-	    DEPENDS "builder/*.py" "builder/templates/*.c"
-		"builder/templates/*.py" "builder/template/*.py"
+		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		COMMENT "copying builder/ files to ${myBuilderDir}"
+		DEPENDS "builder/template/*.py"
+		OUTPUT
+			"${myBuilderDir}/*.py"
+			"${myBuilderDir}/template/*.py"
+			"${myBuilderDir}/templates/*.c"
+			"${myBuilderDir}/templates/*.py"
+	)
+#end copy
+	add_custom_command(
+		COMMAND ${PYTHON_EXECUTABLE}
+		"${myBuilderDir}/generator.py"
+		${PROJECT_SOURCE_DIR}
+		"${myBuilderDir}/templates"
+		${myGeneratedDir}
+		WORKING_DIRECTORY ${myBuilderDir}
+		COMMENT " Generating Python Interface" VERBATIM
+		OUTPUT "${myGeneratedDir}/ai.c"
+		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
+		DEPENDS
+			"${myBuilderDir}/*.py"
+			"${myBuilderDir}/template/*.py"
+			"${myBuilderDir}/templates/*.c"
+			"${myBuilderDir}/templates/*.py"
 	)
 	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
