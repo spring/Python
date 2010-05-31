@@ -115,23 +115,52 @@ if    (BUILD_PYTHON_AIINTERFACE)
 
 	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
+	set(myGeneratedFiles
+			"${myBuilderDir}/template/__init__.py"
+			"${myBuilderDir}/template/context.py"
+			"${myBuilderDir}/template/engine.py"
+			"${myBuilderDir}/template/helper.py"
+			"${myBuilderDir}/template/defaulttags.py"
+			"${myBuilderDir}/interface_builder.py"
+			"${myBuilderDir}/templates/interface.c"
+			"${myBuilderDir}/templates/aiInterface.py"
+			"${myBuilderDir}/templates/wrappai.c"
+			"${myBuilderDir}/templates/converter.c"
+			"${myBuilderDir}/templates/callback.c"
+			"${myBuilderDir}/templates/command_wrapper.c"
+			"${myBuilderDir}/templates/event_wrapper.c"
+			"${myBuilderDir}/templates/create_command.c"
+			"${myBuilderDir}/helper.py"
+			"${myBuilderDir}/generator.py"
+			"${myBuilderDir}/event_parser.py"
+			"${myBuilderDir}/callback_parser.py" )
 #copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
 		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMENT "copying builder/ files to ${myBuilderDir}"
 		DEPENDS
-			"builder/*.py"
-			"builder/template/*.py"
-			"builder/templates/*.c"
-			"builder/templates/*.py"
-		OUTPUT
-			"${myBuilderDir}/*.py"
-			"${myBuilderDir}/template/*.py"
-			"${myBuilderDir}/templates/*.c"
-			"${myBuilderDir}/templates/*.py"
+			"builder/template/__init__.py"
+			"builder/template/context.py"
+			"builder/template/engine.py"
+			"builder/template/helper.py"
+			"builder/template/defaulttags.py"
+			"builder/interface_builder.py"
+			"builder/templates/interface.c"
+			"builder/templates/aiInterface.py"
+			"builder/templates/wrappai.c"
+			"builder/templates/converter.c"
+			"builder/templates/callback.c"
+			"builder/templates/command_wrapper.c"
+			"builder/templates/event_wrapper.c"
+			"builder/templates/create_command.c"
+			"builder/helper.py"
+			"builder/generator.py"
+			"builder/event_parser.py"
+			"builder/callback_parser.py"
+		OUTPUT ${myGeneratedFiles}
 	)
-#end copy
+#create the interface
 	add_custom_command(
 		COMMAND ${PYTHON_EXECUTABLE}
 		"${myBuilderDir}/generator.py"
@@ -142,14 +171,13 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		COMMENT " Generating Python Interface" VERBATIM
 		OUTPUT "${myGeneratedDir}/ai.c"
 		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
-		DEPENDS
-			"${myBuilderDir}/*.py"
-			"${myBuilderDir}/template/*.py"
-			"${myBuilderDir}/templates/*.c"
-			"${myBuilderDir}/templates/*.py"
+		DEPENDS ${myGeneratedFiles}
 	)
 	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
+	set_source_files_properties(${myGeneratedFiles} PROPERTIES GENERATED TRUE)
+
+
 	aux_source_directory(${mySourceDir} mySources)
 	INCLUDE_DIRECTORIES(${mySourceDir})
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC})
