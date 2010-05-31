@@ -115,50 +115,37 @@ if    (BUILD_PYTHON_AIINTERFACE)
 
 	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
-	set(myGeneratedFiles
-			"${myBuilderDir}/template/__init__.py"
-			"${myBuilderDir}/template/context.py"
-			"${myBuilderDir}/template/engine.py"
-			"${myBuilderDir}/template/helper.py"
-			"${myBuilderDir}/template/defaulttags.py"
-			"${myBuilderDir}/interface_builder.py"
-			"${myBuilderDir}/templates/interface.c"
-			"${myBuilderDir}/templates/aiInterface.py"
-			"${myBuilderDir}/templates/wrappai.c"
-			"${myBuilderDir}/templates/converter.c"
-			"${myBuilderDir}/templates/callback.c"
-			"${myBuilderDir}/templates/command_wrapper.c"
-			"${myBuilderDir}/templates/event_wrapper.c"
-			"${myBuilderDir}/templates/create_command.c"
-			"${myBuilderDir}/helper.py"
-			"${myBuilderDir}/generator.py"
-			"${myBuilderDir}/event_parser.py"
-			"${myBuilderDir}/callback_parser.py" )
+	set(builderFiles
+			"template/__init__.py"
+			"template/context.py"
+			"template/engine.py"
+			"template/helper.py"
+			"template/defaulttags.py"
+			"interface_builder.py"
+			"templates/interface.c"
+			"templates/aiInterface.py"
+			"templates/wrappai.c"
+			"templates/converter.c"
+			"templates/callback.c"
+			"templates/command_wrapper.c"
+			"templates/event_wrapper.c"
+			"templates/create_command.c"
+			"helper.py"
+			"generator.py"
+			"event_parser.py"
+			"callback_parser.py")
+	FOREACH (FILE ${builderFiles})
+		list (APPEND myGeneratedFilesSourceDir "builder/${FILE}")
+		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
+	ENDFOREACH(FILE)
+
 #copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
 		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMENT "copying builder/ files to ${myBuilderDir}"
-		DEPENDS
-			"builder/template/__init__.py"
-			"builder/template/context.py"
-			"builder/template/engine.py"
-			"builder/template/helper.py"
-			"builder/template/defaulttags.py"
-			"builder/interface_builder.py"
-			"builder/templates/interface.c"
-			"builder/templates/aiInterface.py"
-			"builder/templates/wrappai.c"
-			"builder/templates/converter.c"
-			"builder/templates/callback.c"
-			"builder/templates/command_wrapper.c"
-			"builder/templates/event_wrapper.c"
-			"builder/templates/create_command.c"
-			"builder/helper.py"
-			"builder/generator.py"
-			"builder/event_parser.py"
-			"builder/callback_parser.py"
-		OUTPUT ${myGeneratedFiles}
+		DEPENDS ${myGeneratedFilesSourceDir}
+		OUTPUT ${myGeneratedFilesmyBuilderDir}
 	)
 #create the interface
 	add_custom_command(
@@ -171,11 +158,11 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		COMMENT " Generating Python Interface" VERBATIM
 		OUTPUT "${myGeneratedDir}/ai.c"
 		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
-		DEPENDS ${myGeneratedFiles}
+		DEPENDS ${myGeneratedFilesmyBuilderDir}
 	)
 	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
-	set_source_files_properties(${myGeneratedFiles} PROPERTIES GENERATED TRUE)
+	set_source_files_properties(${myGeneratedFilesmyBuilderDir} PROPERTIES GENERATED TRUE)
 
 
 	aux_source_directory(${mySourceDir} mySources)
