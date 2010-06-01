@@ -220,7 +220,7 @@ def getevents(filename):
 				argstring+="\""+member+"\","
 				argstring+="((struct "+sname+"*)data)->"+member+","
 			elif "SAIFloat3" in mtype:
-				formatstring+="so"
+				formatstring+="sO"
 				argstring+="\""+member+"\","
 				argstring+="convert_SAIFloat3(&(((struct "+sname+"*)data)->"+member+")),"
 			elif "SSkirmishAICallback" in mtype:
