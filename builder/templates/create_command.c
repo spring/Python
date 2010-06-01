@@ -1,7 +1,7 @@
 {% exec structname="struct "+cmd[0] %}
         data = malloc(sizeof({{structname}}));
 {% for member in cmd[1] %}
-{% exec type=cmd[1][member] %}
+{% exec member, type=member %}
 {% if "int*" in type %}
         (({{structname}}*)data)->{{member}} = build_intarray(PyDict_GetItemString(command, "{{member}}"));
 {% endif %}

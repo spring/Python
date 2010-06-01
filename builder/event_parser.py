@@ -171,12 +171,12 @@ def parse_structs(filename):
 				memberline = normstring(line).split(";")
 				memberline.pop()
 				
-				members = {}
+				members = []
 				
 				for member in memberline:
 					member=normstring(member).split(" ")
-					members[member[-1]] = joinstrings(member[:-1])
-					
+					members.append((member[-1], joinstrings(member[:-1])))
+
 				structs[event] = (structname, members)
 				
 				line = ""
@@ -195,8 +195,9 @@ def getevents(filename):
 		sname, members = events[event]
 		argstring = ""
 		formatstring = "{"
-		for member in members:
-			mtype = members[member]
+		print sname, members
+		for member, mtype in members:
+			print member, mtype
 			if "int*" in mtype:
 				# special case, it is EVENT_PLAYER_COMMAND
 				# make this as generic as possible

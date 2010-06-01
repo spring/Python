@@ -218,13 +218,12 @@ def commandfuncs(commands):
 		pyarglist = []
 		dictbuild = "data = {"
 		
-		for member in members:
+		for member, mtype in members:
 			if not "ret_" in member:
 				pyarglist.append(member)
 				dictbuild +="\""+member+"\":"+member+","
 			else:
 				# return data, give something stupid to the function
-				mtype = members[member]
 				if "int" in mtype:
 					dictbuild += "\""+member+"\":0,"
 				elif "SAIFloat3" in mtype:
