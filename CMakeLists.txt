@@ -96,9 +96,6 @@ else    (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 	message ("warning: Python AI Interface will not be built!")
 endif	(PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 
-
-
-
 # Build
 if    (BUILD_PYTHON_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
@@ -110,27 +107,64 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	set(myGeneratedDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
+	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
+
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
 	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
+	set(builderFiles
+			"template/__init__.py"
+			"template/context.py"
+			"template/engine.py"
+			"template/helper.py"
+			"template/defaulttags.py"
+			"interface_builder.py"
+			"templates/interface.c"
+			"templates/aiInterface.py"
+			"templates/wrappai.c"
+			"templates/converter.c"
+			"templates/callback.c"
+			"templates/command_wrapper.c"
+			"templates/event_wrapper.c"
+			"templates/create_command.c"
+			"helper.py"
+			"generator.py"
+			"event_parser.py"
+			"callback_parser.py")
+	FOREACH (FILE ${builderFiles})
+		list (APPEND myGeneratedFilesSourceDir "builder/${FILE}")
+		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
+	ENDFOREACH(FILE)
+
+#copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
-	    COMMAND ${PYTHON_EXECUTABLE} ARGS "-B"
-	    "builder/generator.py"
-	    ${PROJECT_SOURCE_DIR}
-	    "builder/templates"
-	    ${myGeneratedDir}
-	    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	    COMMENT " Generating Python Interface" VERBATIM
-	    OUTPUT "${myGeneratedDir}/ai.c"
-	    OUTPUT "${myGeneratedDir}/PyAI/interface.py"
-	    DEPENDS "builder/*.py" "builder/templates/*.c"
-		"builder/templates/*.py" "builder/template/*.py"
+		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		COMMENT "copying builder/ files to ${myBuilderDir}"
+		DEPENDS ${myGeneratedFilesSourceDir}
+		OUTPUT ${myGeneratedFilesmyBuilderDir}
+	)
+#create the interface
+	add_custom_command(
+		COMMAND ${PYTHON_EXECUTABLE}
+		"${myBuilderDir}/generator.py"
+		${PROJECT_SOURCE_DIR}
+		"${myBuilderDir}/templates"
+		${myGeneratedDir}
+		WORKING_DIRECTORY ${myBuilderDir}
+		COMMENT " Generating Python Interface" VERBATIM
+		OUTPUT "${myGeneratedDir}/ai.c"
+		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
+		DEPENDS ${myGeneratedFilesmyBuilderDir}
 	)
 	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
+	set_source_files_properties(${myGeneratedFilesmyBuilderDir} PROPERTIES GENERATED TRUE)
+
+
 	aux_source_directory(${mySourceDir} mySources)
 	INCLUDE_DIRECTORIES(${mySourceDir})
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC})
