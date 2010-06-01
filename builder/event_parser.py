@@ -195,9 +195,7 @@ def getevents(filename):
 		sname, members = events[event]
 		argstring = ""
 		formatstring = "{"
-		print sname, members
 		for member, mtype in members:
-			print member, mtype
 			if "int*" in mtype:
 				# special case, it is EVENT_PLAYER_COMMAND
 				# make this as generic as possible
