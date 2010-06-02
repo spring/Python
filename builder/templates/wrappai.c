@@ -143,6 +143,7 @@ python_release(int teamId)
 EXPORT (int)
 python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel)
 {
+	//FIXME: this overwrites the logfile from InterfaceExport.c
 	simpleLog_init(logFileName, useTimeStamps,logLevel);
 	LOG("python_load()");
 	//Initalize Python
