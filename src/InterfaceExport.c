@@ -188,7 +188,7 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 		logFile, true, true, false, false);
 
 	if (logFileFetched) {
-		simpleLog_init(logFilePath, useTimeStamps, logLevel);
+		simpleLog_init(logFilePath, useTimeStamps, logLevel, false);
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 				"Failed initializing log-file \"%s\"", logFileFetched);
