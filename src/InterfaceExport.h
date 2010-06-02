@@ -71,7 +71,6 @@ EXPORT(int) unloadSkirmishAILibrary(
 		const char* const version);
 EXPORT(int) unloadAllSkirmishAILibraries();
 
-
 #ifdef __cplusplus
 } // extern "C"
 #endif

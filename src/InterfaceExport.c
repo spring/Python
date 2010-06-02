@@ -41,13 +41,15 @@ static const struct SAIInterfaceCallback* callback = NULL;
 
 typedef int (*INIT_FUNC)(int teamId, const struct SSkirmishAICallback* aiCallback);
 typedef int (*RELEASE_FUNC)(int teamId);
-typedef int (*LOAD_FUNC)(const struct SAIInterfaceCallback* callback, int interfaceId);
+typedef int (*LOAD_FUNC)(const struct SAIInterfaceCallback* callback, int interfaceId, void * pythonLog);
 typedef int (*HANDLE_FUNC)(int teamId, int topic, const void* data);
 
 INIT_FUNC    PYTHON_INIT;
 LOAD_FUNC    PYTHON_LOAD;
 RELEASE_FUNC PYTHON_RELEASE;
 HANDLE_FUNC  PYTHON_HANDLEEVENT;
+
+void pythonLog(const char *format, ...);
 
 void* hPythonInterface;
 //void* hPython;
@@ -83,9 +85,19 @@ int loadPythonInterpreter(){
 		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
 		return 0; //TODO return -1 when engine supports this
 	}
-	simpleLog_log("Python loaded successfully!");
-	PYTHON_LOAD(callback,interfaceId);
+	simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
+	PYTHON_LOAD(callback,interfaceId, &pythonLog);
 	return 0;
+}
+
+void pythonLog(const char *format, ...){
+/*	va_list argp;
+	va_start(argp, format);
+	simpleLog_log(format, argp);
+	va_end(argp);
+*/
+//FIXME: the above doesn't work, below does! (why doesn't the cleaner above work?)
+	simpleLog_log(format);
 }
 
 
@@ -296,7 +308,7 @@ int CALLING_CONV proxy_skirmishAI_handleEvent(
 EXPORT(const struct SSkirmishAILibrary*)
 loadSkirmishAILibrary(const char* const shortName, const char* const version) 
 {
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 0);
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary()");
 	if (mySSkirmishAILibrary == NULL) {
 		mySSkirmishAILibrary =
 			(struct SSkirmishAILibrary*) malloc(sizeof(struct SSkirmishAILibrary));
@@ -308,7 +320,7 @@ loadSkirmishAILibrary(const char* const shortName, const char* const version)
 		mySSkirmishAILibrary->release = &proxy_skirmishAI_release;
 		mySSkirmishAILibrary->handleEvent = &proxy_skirmishAI_handleEvent;
 	}
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 10);
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary() done");
 	return mySSkirmishAILibrary;
 }
 

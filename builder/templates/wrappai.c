@@ -31,7 +31,7 @@
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 
 #include "InterfaceDefines.h"
-#include "CUtils/SimpleLog.h"
+#include "InterfaceExport.h"
 
 
 {% exec import os.path %}
@@ -42,13 +42,30 @@
 static PyObject* wrapper;
 static const PyObject* sys_module;
 
-/*add path to the python module search path*/
-int update_python_path(const char* path)
+PYTHON_LOG LOG;
+
+/*add to search path and load module */
+PyObject *pythonLoadModule(const char *modul, const char* path)
 {
-	simpleLog_log("update_python_path() %s", path);
-	PyObject* pathlist = PyObject_GetAttrString((PyObject*)sys_module, "path");
-	return PyList_Append(pathlist, PyString_FromString(path));
+	PyObject *res=NULL;
+	PyObject *tmpname;
+	if (path!=NULL){
+		LOG("Including Python search path %s", path);
+		PyObject* pathlist = PyObject_GetAttrString((PyObject*)sys_module, "path");
+		PyList_Append(pathlist, PyString_FromString(path));
+	}
+	tmpname=PyString_FromString(modul);
+	res=PyImport_Import(tmpname);
+	if (!res){
+		LOG("Could not load python module %s\"%s\"",path,modul);
+		PyErr_Print();
+		return res;
+	}
+	LOG("Loaded Python Module %s in %s",modul, path);
+	Py_DECREF(tmpname);
+	return res;
 }
+
 
 EXPORT(int)
 python_handleEvent(int teamId, int topic, const void* data)
@@ -61,12 +78,12 @@ python_handleEvent(int teamId, int topic, const void* data)
 	}
 	pfunc=PyObject_GetAttrString((PyObject*)wrapper,PYTHON_INTERFACE_HANDLE_EVENT);
 	if (!pfunc){
-		simpleLog_log("failed to extract function from module");
+		LOG("failed to extract function from module");
 	return -1;
 	}
 	args = Py_BuildValue("(iiO)",teamId, topic, event_convert(topic,(void*)data));
 	if (!args){
-	    simpleLog_log("failed to build args");
+	    LOG("failed to build args");
 	    return -1;
 	}
 	PyObject_CallObject(pfunc, args);
@@ -78,30 +95,18 @@ python_handleEvent(int teamId, int topic, const void* data)
 EXPORT(int)
 python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 {
-	simpleLog_log("python_init()");
+	LOG("python_init()");
 	const char* className = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
 			PYTHON_SKIRMISH_AI_PROPERTY_CLASS_NAME);
-	simpleLog_log("classname %s",className);
+	LOG("Name of the AI: %s",className);
 	const char* modName = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
 			PYTHON_SKIRMISH_AI_PROPERTY_MODULE_NAME);
-	simpleLog_log("modName %s",modName);
+	LOG("Python Class Name: %s",modName);
 
 	const char* aipath = aiCallback->Clb_DataDirs_getConfigDir(teamId);
-	update_python_path(aipath);
-	if (className == NULL) {
-		simpleLog_log("Couldn't find className");
-                return -1;
-	}
-	PyObject* tmpname = PyString_FromString(modName);
-	PyObject* aimodule = PyImport_Import(tmpname);
-
-	Py_DECREF(tmpname);
-	if (!aimodule){
-		simpleLog_log("python_init() failed:");
-		PyErr_Print();
-		wrapper=NULL;
+	PyObject* aimodule = pythonLoadModule(modName, aipath);	
+	if (!aimodule)
 		return -1;
-	}
 
 	
 	PyObject* class = PyObject_GetAttrString(aimodule, className);
@@ -113,7 +118,7 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 		return -1;
 
 	if (PyType_Ready(&PyAICallback_Type) < 0){
-		simpleLog_log("Error PyType_Ready()");
+		LOG("Error PyType_Ready()");
 		PyErr_Print();
 		return -1;
 	}
@@ -124,7 +129,7 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 EXPORT(int)
 python_release(int teamId)
 {
-	simpleLog_log("python_release()");
+	LOG("python_release()");
 	Py_Finalize();
 	return 0;
 }
@@ -132,44 +137,19 @@ python_release(int teamId)
 /*
 * Initialize Python
 */
-
 EXPORT (int)
-python_load(const struct SAIInterfaceCallback* callback,const int interfaceId)
+python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, PYTHON_LOG pythonLog)
 {
-	PyObject *tmpname;
-	simpleLog_log("python_load()");
-	
+	LOG=(PYTHON_LOG)pythonLog;
+	LOG("python_load()");
 	//Initalize Python
 	Py_Initialize();
-	simpleLog_log("Initialized python %s",Py_GetVersion());
-	
-	sys_module=PyImport_Import(PyString_FromString("sys"));
-	
-	
+	LOG("Initialized python %s",Py_GetVersion());
+	sys_module=pythonLoadModule("sys", NULL);
 	if (!sys_module)
-	{
-		simpleLog_log("Could not load sys module");
-		PyErr_Print();
 		return -1;
-	}
-	simpleLog_log("sys module loaded");
-
-	if (update_python_path(callback->DataDirs_getConfigDir(interfaceId)))
-	{
-		simpleLog_log("Could not update python path for wrapper");
-		PyErr_Print();
-		return -1;
-	}
-	tmpname=PyString_FromString(PYTHON_INTERFACE_MODULE_NAME);
-	wrapper=PyImport_Import(tmpname);
-	Py_DECREF(tmpname);
+	wrapper=pythonLoadModule(PYTHON_INTERFACE_MODULE_NAME,callback->DataDirs_getConfigDir(interfaceId));
 	if (!wrapper)
-	{
-		simpleLog_log("Could not load interface module %s",PYTHON_INTERFACE_MODULE_NAME);
-		PyErr_Print();
 		return -1;
-	}
-	simpleLog_log("interface module module loaded");
 	return 0;
 }
-

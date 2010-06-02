@@ -26,12 +26,14 @@
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 
 // team instance functions
+typedef int (*PYTHON_LOG)(const char *format,...);
 
 EXPORT(int) python_init(int teamId, const struct SSkirmishAICallback* aiCallback);
 EXPORT(int) python_release(int teamId);
-EXPORT(int) python_load(const struct SAIInterfaceCallback* callback, int interfaceId);
+EXPORT(int) python_load(const struct SAIInterfaceCallback* callback, int interfaceId, PYTHON_LOG pythonLog);
 EXPORT(int) python_handleEvent(int teamId, int topic, const void* data);
 
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
+
 
 #endif // _AIEXPORT_H
