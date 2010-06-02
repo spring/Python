@@ -41,7 +41,8 @@ static const struct SAIInterfaceCallback* callback = NULL;
 
 typedef int (*INIT_FUNC)(int teamId, const struct SSkirmishAICallback* aiCallback);
 typedef int (*RELEASE_FUNC)(int teamId);
-typedef int (*LOAD_FUNC)(const struct SAIInterfaceCallback* callback, int interfaceId, void * pythonLog);
+typedef int (*LOAD_FUNC)(const struct SAIInterfaceCallback* callback, int interfaceId,  const char* logFileName, bool useTimeStamps,
+		int logLevel);
 typedef int (*HANDLE_FUNC)(int teamId, int topic, const void* data);
 
 INIT_FUNC    PYTHON_INIT;
@@ -49,16 +50,14 @@ LOAD_FUNC    PYTHON_LOAD;
 RELEASE_FUNC PYTHON_RELEASE;
 HANDLE_FUNC  PYTHON_HANDLEEVENT;
 
-void pythonLog(const char *format, ...);
 
 void* hPythonInterface;
-//void* hPython;
 #ifdef WIN32
 #define PATH_SEPERATOR "\\"
 #else
 #define PATH_SEPERATOR "/"
 #endif
-int loadPythonInterpreter(){
+int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLevel){
 	char filename[FILEPATH_MAXSIZE];
 	char logBuf[FILEPATH_MAXSIZE];
 	const char* const dd_r =
@@ -86,20 +85,9 @@ int loadPythonInterpreter(){
 		return 0; //TODO return -1 when engine supports this
 	}
 	simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
-	PYTHON_LOAD(callback,interfaceId, &pythonLog);
+	PYTHON_LOAD(callback,interfaceId, logFileName, useTimeStamps, logLevel);
 	return 0;
 }
-
-void pythonLog(const char *format, ...){
-/*	va_list argp;
-	va_start(argp, format);
-	simpleLog_log(format, argp);
-	va_end(argp);
-*/
-//FIXME: the above doesn't work, below does! (why doesn't the cleaner above work?)
-	simpleLog_log(format);
-}
-
 
 /*
 * opens the log file and tries to load an python interpreter and initalizes
@@ -225,9 +213,10 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 	simpleLog_log("Using read/write data-directory: %s",
 		callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using log file: %s", propFilePath);
-	FREE(logFile);
 	simpleLog_log("Loading Python");
-	return loadPythonInterpreter();
+	int res=loadPythonInterpreter(logFilePath, useTimeStamps, logLevel);
+	FREE(logFile);
+	return res;
 }
 
 EXPORT(int)

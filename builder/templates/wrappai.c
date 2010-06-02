@@ -25,6 +25,8 @@
 #include <Python.h>
 #include "ai.h"
 
+#include "CUtils/SimpleLog.h"
+
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
 #include "ExternalAI/Interface/AISEvents.h"
@@ -33,6 +35,7 @@
 #include "InterfaceDefines.h"
 #include "InterfaceExport.h"
 
+PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
 {% exec import os.path %}
 {% for file in ("converter.c", "event_wrapper.c", "command_wrapper.c", "callback.c", ) %}
@@ -42,7 +45,7 @@
 static PyObject* wrapper;
 static const PyObject* sys_module;
 
-PYTHON_LOG LOG;
+#define LOG simpleLog_log
 
 /*add to search path and load module */
 PyObject *pythonLoadModule(const char *modul, const char* path)
@@ -138,9 +141,9 @@ python_release(int teamId)
 * Initialize Python
 */
 EXPORT (int)
-python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, PYTHON_LOG pythonLog)
+python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel)
 {
-	LOG=(PYTHON_LOG)pythonLog;
+	simpleLog_init(logFileName, useTimeStamps,logLevel);
 	LOG("python_load()");
 	//Initalize Python
 	Py_Initialize();
