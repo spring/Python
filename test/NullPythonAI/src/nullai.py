@@ -26,12 +26,8 @@ from PyAI import Command
 from PyAI import UnitDef
 from PyAI import Map, Cheats, Resource
 
-#imports for console
-import socket
-import select
-import code
-import sys
-import traceback
+from console import Console
+
 
 class NullPythonAI(BaseAI):
 	def __init__(self, team, pyclb):
@@ -40,17 +36,19 @@ class NullPythonAI(BaseAI):
 		self.bindFunction(self.eventUnitCreated, PyAI.EVENT_UNIT_CREATED)
 		self.bindFunction(self.eventInit, PyAI.EVENT_INIT)
 		self.bindFunction(self.eventUpdate, PyAI.EVENT_UPDATE)
+		self.bindFunction(self.eventRelease, PyAI.EVENT_RELEASE)
 		
 		self.units = {}
 		self.command = None
 		self.unitdef = None
 		self.resource = None
-		self.console = Console()
-
+		self.console = Console(self)
 	def eventUnitCreated(self, data):
 		print "Unit created (unit builder)", self.frame, data["unit"], data["builder"]
 		self.units[data["unit"]]  = data["unit"] #FIXME looks ugly
 
+	def eventRelease(self, data):
+		self.console.release()
 	def eventInit(self,data):
 		print "eventInit", self.frame
 		self.units = {}
@@ -83,58 +81,3 @@ class NullPythonAI(BaseAI):
 		self.frame=data["frame"]
 		self.console.update(data)
 
-class StdoutWrap:
-	def __init__(self, socket):
-		self.socket=socket
-
-	def write(self, data):
-		self.socket.send(data)
-
-class Console:
-	def __init__(self):
-		self.server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-		try:
-			self.server.bind(("localhost",50000)) #listen on port 50000
-			print "Openend simple Python Console on port localhost:50000"
-			self.server.listen(5) #max 5 connections
-			self.read_set = [self.server]
-			self.except_set = [self.server]
-			self.console=code.InteractiveInterpreter()
-		except:
-			print "Error binding Python Console to localhost:50000"
-
-	def __del__(self):
-		print "Closing Socket"
-		self.server.close()
-	def out(self,data):
-		sys.__stdout__.write(data)
-	def dump(self,obj):
-		for attr in dir(obj):
-			print "obj.%s = %s" % (attr, getattr(obj, attr))
-	def update(self, data):
-		readready,writeready,exceptready = select.select(self.read_set, [], [], 0.0)
-		for sock in readready:
-			if self.server == sock:
-				client, address = sock.accept()
-				self.out('Connection from %s on port %d' % address)
-				sock.send('Welcome to the spring python-interface console!')
-				self.StdoutWrap=StdoutWrap(client)
-				sys.stdout=self.StdoutWrap
-				sys.stderr=self.StdoutWrap
-				self.read_set.append(client)
-				self.except_set.append(client)
-			else:
-				data = sock.recv(1024)
-				if data:
-					#self.console.runcode(data[:-2]) #remove \r\n
-					try:
-						exec(data[:-2])
-					except:
-						traceback.print_exc()
-				else:
-					self.out('Closed connection from ', sock.getpeername())
-					sock.close()
-					self.read_set.remove(sock)
-					self.except_set.remove(sock)
-		for sock in exceptready:
-			print "exception"
