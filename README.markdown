@@ -1,15 +1,21 @@
-Howto setup
+# Howto setup
 
-First get the clean spring sourcecode:
+1. Get the clean spring sourcecode:
 
- git clone git://github.com/spring/spring.git spring
+		git clone git://github.com/spring/spring.git spring
+		cd spring
 
-then get the springpyai code into the right folder
+2. Get the _Python AI Interface_ code into the right folder
 
- git clone git://springpyai.git.sourceforge.net/gitroot/springpyai/springpyai spring/AI/Interfaces/Python
+		git clone git://github.com/spring/Python.git AI/Interfaces/Python
 
-and link the nullpythonai to the right folder to get it compiled
+3. Link the _NullPythonAI_ to the right folder to get it compiled
  
- ln -s ../Interfaces/Python/test/NullPythonAI/ spring/AI/Skirmish/NullPythonAI 
+		ln -s ../Interfaces/Python/test/NullPythonAI AI/Skirmish/NullPythonAI
 
-That's it, when python is detected, the Interface will be compiled automaticly
+That's it. When Python is detected, the AI Interface will be compiled
+automaticly together with spring:
+
+	cmake
+	make
+
