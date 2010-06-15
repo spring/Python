@@ -26,9 +26,6 @@ from PyAI import Command
 from PyAI import UnitDef
 from PyAI import Map, Cheats, Resource
 
-from console import Console
-
-
 class NullPythonAI(BaseAI):
 	def __init__(self, team, pyclb):
 		super(self.__class__, self).__init__(team, pyclb)
@@ -42,13 +39,12 @@ class NullPythonAI(BaseAI):
 		self.command = None
 		self.unitdef = None
 		self.resource = None
-		self.console = Console(self)
 	def eventUnitCreated(self, data):
 		print "Unit created (unit builder)", self.frame, data["unit"], data["builder"]
-		self.units[data["unit"]]  = data["unit"] #FIXME looks ugly
+		self.units[data["unit"]]  = data["unit"]
 
 	def eventRelease(self, data):
-		self.console.release()
+		print "eventRelease"
 	def eventInit(self,data):
 		print "eventInit", self.frame
 		self.units = {}
@@ -79,5 +75,4 @@ class NullPythonAI(BaseAI):
 		if (self.frame==self.initFrame): #process initCreate Events, then cheatInit
 			self.cheatInit()
 		self.frame=data["frame"]
-		self.console.update(data)
 

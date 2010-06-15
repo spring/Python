@@ -104,8 +104,10 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 	set(myTarget      "${myName}-AIInterface")
 	set(myLoader      "${myName}-Loader")
+	set(myNullPython  "NullPythonAI")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	set(myInstAIDir   ${SKIRMISH_AI_LIBS}/${myNullPython}/${myVersion})
 	set(myGeneratedDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
 	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
 
@@ -183,4 +185,8 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	# Install the library
 	install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
 	install(TARGETS   ${myLoader}      DESTINATION "${myInstLibsDir}")
+	# Install the NullPythonAI
+	install(DIRECTORY  "${myDir}/${myNullPython}/src/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.py$")
+	install(DIRECTORY  "${myDir}/${myNullPython}/data/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.lua$")
+
 endif (BUILD_PYTHON_AIINTERFACE)
