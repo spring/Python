@@ -10,7 +10,7 @@
 	git clone git://github.com/spring/Python.git AI/Interfaces/Python
 
 That's it. When Python is detected, the AI Interface will be compiled
-automaticly together with spring:
+with spring:
 
 	cmake .
 	make
