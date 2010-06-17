@@ -114,6 +114,7 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found Skirmish AI: ${myNullPython} ${myVersion}") # SkirmishAIMessage() not defined here
 
 	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
