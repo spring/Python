@@ -26,6 +26,7 @@
 #include "ai.h"
 
 #include "CUtils/SimpleLog.h"
+#include "CUtils/SharedLibrary.h"
 
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
@@ -34,14 +35,11 @@
 
 #include "InterfaceDefines.h"
 #include "InterfaceExport.h"
-//FIXME remove this
-#include <dlfcn.h>
-
 
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
 // Python functions pointers
-void*  (*PYDICT_GETITEMSTRING)(void*, const char*)=NULL;
+void*  (*PYDICT_GETITEMSTRING)(void*, const char*) ;
 void*  (*PY_BUILDVALUE)(char*, ...)=NULL;
 int    (*PYDICT_SETITEM)(void*, void*, void*)=NULL;
 void   (*PYERR_PRINT)(void)=NULL;
@@ -66,27 +64,27 @@ PyObject *_PY_NONESTRUCT=NULL;
 void
 bindPythonFunctions(void *hPython)
 {
-	PYDICT_GETITEMSTRING=dlsym(hPython, "PyDict_GetItemString");
-	PY_BUILDVALUE=dlsym(hPython, "Py_BuildValue");
-	PYDICT_SETITEM=dlsym(hPython, "PyDict_SetItem");
-	PYERR_PRINT=dlsym(hPython, "PyErr_Print");
-	PYFLOAT_ASDOUBLE=dlsym(hPython, "PyFloat_AsDouble");
-	PYFLOAT_FROMDOUBLE=dlsym(hPython, "PyFloat_FromDouble");
-	PYIMPORT_IMPORT=dlsym(hPython, "PyImport_Import");
-	PYINT_FROMLONG=dlsym(hPython, "PyInt_FromLong");
-	PYLIST_APPEND=dlsym(hPython, "PyList_Append");
-	PYLIST_GETITEM=dlsym(hPython, "PyList_GetItem");
-	PYLIST_NEW=dlsym(hPython, "PyList_New");
-	PYLIST_SETITEM=dlsym(hPython, "PyList_SetItem");
-	PYOBJECT_CALLOBJECT=dlsym(hPython, "PyObject_CallObject");
-	PYOBJECT_GETATTRSTRING=dlsym(hPython, "PyObject_GetAttrString");
-	PYSTRING_FROMSTRING=dlsym(hPython, "PyString_FromString");
-	PYTUPLE_GETITEM=dlsym(hPython, "PyTuple_GetItem");
-	PYTYPE_READY=dlsym(hPython, "PyType_Ready");
-	PY_FINALIZE=dlsym(hPython, "Py_Finalize");
-	PY_GETVERSION=dlsym(hPython, "Py_GetVersion");
-	PY_INITIALIZE=dlsym(hPython, "Py_Initialize");
-	_PY_NONESTRUCT=dlsym(hPython, "_Py_NoneStruct");
+	PYDICT_GETITEMSTRING=sharedLib_findAddress(hPython, "PyDict_GetItemString");
+	PY_BUILDVALUE=sharedLib_findAddress(hPython, "Py_BuildValue");
+	PYDICT_SETITEM=sharedLib_findAddress(hPython, "PyDict_SetItem");
+	PYERR_PRINT=sharedLib_findAddress(hPython, "PyErr_Print");
+	PYFLOAT_ASDOUBLE=sharedLib_findAddress(hPython, "PyFloat_AsDouble");
+	PYFLOAT_FROMDOUBLE=sharedLib_findAddress(hPython, "PyFloat_FromDouble");
+	PYIMPORT_IMPORT=sharedLib_findAddress(hPython, "PyImport_Import");
+	PYINT_FROMLONG=sharedLib_findAddress(hPython, "PyInt_FromLong");
+	PYLIST_APPEND=sharedLib_findAddress(hPython, "PyList_Append");
+	PYLIST_GETITEM=sharedLib_findAddress(hPython, "PyList_GetItem");
+	PYLIST_NEW=sharedLib_findAddress(hPython, "PyList_New");
+	PYLIST_SETITEM=sharedLib_findAddress(hPython, "PyList_SetItem");
+	PYOBJECT_CALLOBJECT=sharedLib_findAddress(hPython, "PyObject_CallObject");
+	PYOBJECT_GETATTRSTRING=sharedLib_findAddress(hPython, "PyObject_GetAttrString");
+	PYSTRING_FROMSTRING=sharedLib_findAddress(hPython, "PyString_FromString");
+	PYTUPLE_GETITEM=sharedLib_findAddress(hPython, "PyTuple_GetItem");
+	PYTYPE_READY=sharedLib_findAddress(hPython, "PyType_Ready");
+	PY_FINALIZE=sharedLib_findAddress(hPython, "Py_Finalize");
+	PY_GETVERSION=sharedLib_findAddress(hPython, "Py_GetVersion");
+	PY_INITIALIZE=sharedLib_findAddress(hPython, "Py_Initialize");
+	_PY_NONESTRUCT=sharedLib_findAddress(hPython, "_Py_NoneStruct");
 }
 
 //Python functions
