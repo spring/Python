@@ -32,9 +32,6 @@ extern "C" {
 #define PYTHON_INTERFACE_MODULE_NAME    "wrapper"
 #define PYTHON_INTERFACE_HANDLE_EVENT	"handleEvent"
 
-
-#define PYTHON_LOADER                   "Python-Loader"
-
 #define FILEPATH_MAXSIZE                1024
 
 #include <stddef.h> // for NULL

@@ -34,6 +34,9 @@
 
 #include "InterfaceDefines.h"
 #include "InterfaceExport.h"
+//FIXME remove this
+#include <dlfcn.h>
+
 
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
@@ -41,7 +44,7 @@ PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 void*  (*PYDICT_GETITEMSTRING)(void*, const char*)=NULL;
 void*  (*PY_BUILDVALUE)(char*, ...)=NULL;
 int    (*PYDICT_SETITEM)(void*, void*, void*)=NULL;
-void   (*PYERR_PRINT)()=NULL;
+void   (*PYERR_PRINT)(void)=NULL;
 double (*PYFLOAT_ASDOUBLE)(void*)=NULL;
 void*  (*PYFLOAT_FROMDOUBLE)(double)=NULL;
 void*  (*PYIMPORT_IMPORT)(void*)=NULL;
@@ -55,10 +58,36 @@ void*  (*PYOBJECT_GETATTRSTRING)(void*, const char*)=NULL;
 void*  (*PYSTRING_FROMSTRING)(const char*)=NULL;
 void*  (*PYTUPLE_GETITEM)(void*, Py_ssize_t)=NULL;
 int    (*PYTYPE_READY)(void*)=NULL;
-void   (*PY_FINALIZE)()=NULL;
-const char* (*PY_GETVERSION)()=NULL;
-void   (*PY_INITIALIZE)()=NULL;
-void   (*_PY_NONESTRUCT)=NULL;
+void   (*PY_FINALIZE)(void)=NULL;
+const char* (*PY_GETVERSION)(void)=NULL;
+void   (*PY_INITIALIZE)(void)=NULL;
+PyObject *_PY_NONESTRUCT=NULL;
+
+void
+bindPythonFunctions(void *hPython)
+{
+	PYDICT_GETITEMSTRING=dlsym(hPython, "PyDict_GetItemString");
+	PY_BUILDVALUE=dlsym(hPython, "Py_BuildValue");
+	PYDICT_SETITEM=dlsym(hPython, "PyDict_SetItem");
+	PYERR_PRINT=dlsym(hPython, "PyErr_Print");
+	PYFLOAT_ASDOUBLE=dlsym(hPython, "PyFloat_AsDouble");
+	PYFLOAT_FROMDOUBLE=dlsym(hPython, "PyFloat_FromDouble");
+	PYIMPORT_IMPORT=dlsym(hPython, "PyImport_Import");
+	PYINT_FROMLONG=dlsym(hPython, "PyInt_FromLong");
+	PYLIST_APPEND=dlsym(hPython, "PyList_Append");
+	PYLIST_GETITEM=dlsym(hPython, "PyList_GetItem");
+	PYLIST_NEW=dlsym(hPython, "PyList_New");
+	PYLIST_SETITEM=dlsym(hPython, "PyList_SetItem");
+	PYOBJECT_CALLOBJECT=dlsym(hPython, "PyObject_CallObject");
+	PYOBJECT_GETATTRSTRING=dlsym(hPython, "PyObject_GetAttrString");
+	PYSTRING_FROMSTRING=dlsym(hPython, "PyString_FromString");
+	PYTUPLE_GETITEM=dlsym(hPython, "PyTuple_GetItem");
+	PYTYPE_READY=dlsym(hPython, "PyType_Ready");
+	PY_FINALIZE=dlsym(hPython, "Py_Finalize");
+	PY_GETVERSION=dlsym(hPython, "Py_GetVersion");
+	PY_INITIALIZE=dlsym(hPython, "Py_Initialize");
+	_PY_NONESTRUCT=dlsym(hPython, "_Py_NoneStruct");
+}
 
 //Python functions
 #define PyDict_GetItemString   PYDICT_GETITEMSTRING
@@ -81,7 +110,8 @@ void   (*_PY_NONESTRUCT)=NULL;
 #define Py_Finalize            PY_FINALIZE
 #define Py_GetVersion          PY_GETVERSION
 #define Py_Initialize          PY_INITIALIZE
-#define _Py_NoneStruct         _PY_NONESTRUCT
+#undef Py_None
+#define Py_None		       _PY_NONESTRUCT
 
 {% exec import os.path %}
 {% for file in ("converter.c", "event_wrapper.c", "command_wrapper.c", "callback.c", ) %}
@@ -183,30 +213,6 @@ python_release(int teamId)
 	return 0;
 }
 
-void bindAndLoadPython(){
-	void *hPython=sharedLib_load("/usr/lib/libpython2.6.so");
-	PYDICT_GETITEMSTRING=sharedLib_findAddress(hPython, "PyDict_GetItemString");
-	PY_BUILDVALUE=sharedLib_findAddress(hPython, "Py_BuildValue");
-	PYDICT_SETITEM=sharedLib_findAddress(hPython, "PyDict_SetItem");
-	PYERR_PRINT=sharedLib_findAddress(hPython, "PyErr_Print");
-	PYFLOAT_ASDOUBLE=sharedLib_findAddress(hPython, "PyFloat_AsDouble");
-	PYFLOAT_FROMDOUBLE=sharedLib_findAddress(hPython, "PyFloat_FromDouble");
-	PYIMPORT_IMPORT=sharedLib_findAddress(hPython, "PyImport_Import");
-	PYINT_FROMLONG=sharedLib_findAddress(hPython, "PyInt_FromLong");
-	PYLIST_APPEND=sharedLib_findAddress(hPython, "PyList_Append");
-	PYLIST_GETITEM=sharedLib_findAddress(hPython, "PyList_GetItem");
-	PYLIST_NEW=sharedLib_findAddress(hPython, "PyList_New");
-	PYLIST_SETITEM=sharedLib_findAddress(hPython, "PyList_SetItem");
-	PYOBJECT_CALLOBJECT=sharedLib_findAddress(hPython, "PyObject_CallObject");
-	PYOBJECT_GETATTRSTRING=sharedLib_findAddress(hPython, "PyObject_GetAttrString");
-	PYSTRING_FROMSTRING=sharedLib_findAddress(hPython, "PyString_FromString");
-	PYTUPLE_GETITEM=sharedLib_findAddress(hPython, "PyTuple_GetItem");
-	PYTYPE_READY=sharedLib_findAddress(hPython, "PyType_Ready");
-	PY_FINALIZE=sharedLib_findAddress(hPython, "Py_Finalize");
-	PY_GETVERSION=sharedLib_findAddress(hPython, "Py_GetVersion");
-	PY_INITIALIZE=sharedLib_findAddress(hPython, "Py_Initialize");
-	_PY_NONESTRUCT=sharedLib_findAddress(hPython, "_Py_NoneStruct");
-}
 
 
 /*
@@ -215,10 +221,13 @@ void bindAndLoadPython(){
 EXPORT (int)
 python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel)
 {
+
 	simpleLog_init(logFileName, useTimeStamps,logLevel, true);
 	LOG("python_load()");
 	//Initalize Python
+	printf("python initialized %s\n", Py_GetVersion());
 	Py_Initialize();
+	printf("python initialized\n");
 	LOG("Initialized python %s",Py_GetVersion());
 	sys_module=pythonLoadModule("sys", NULL);
 	if (!sys_module)
@@ -226,5 +235,6 @@ python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, c
 	wrapper=pythonLoadModule(PYTHON_INTERFACE_MODULE_NAME,callback->DataDirs_getConfigDir(interfaceId));
 	if (!wrapper)
 		return -1;
+		
 	return 0;
 }

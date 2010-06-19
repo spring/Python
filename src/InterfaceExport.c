@@ -39,53 +39,42 @@
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
 
-typedef int (*INIT_FUNC)(int teamId, const struct SSkirmishAICallback* aiCallback);
-typedef int (*RELEASE_FUNC)(int teamId);
-typedef int (*LOAD_FUNC)(const struct SAIInterfaceCallback* callback, int interfaceId,  const char* logFileName, bool useTimeStamps,
-		int logLevel);
-typedef int (*HANDLE_FUNC)(int teamId, int topic, const void* data);
-
-INIT_FUNC    PYTHON_INIT;
-LOAD_FUNC    PYTHON_LOAD;
-RELEASE_FUNC PYTHON_RELEASE;
-HANDLE_FUNC  PYTHON_HANDLEEVENT;
-
-
-void* hPythonInterface;
+sharedLib_t hPython;
 #ifdef WIN32
 #define PATH_SEPERATOR "\\"
 #else
 #define PATH_SEPERATOR "/"
 #endif
 int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLevel){
+	const char* pythonNames [] = { 
+		"python26", "python2.6",
+		"python25", "python2.5",
+		"python24", "python2.4",
+		NULL };
+
 	char filename[FILEPATH_MAXSIZE];
 	char logBuf[FILEPATH_MAXSIZE];
 	const char* const dd_r =
 		callback->AIInterface_Info_getValueByKey(interfaceId,
 		AI_INTERFACE_PROPERTY_DATA_DIR);
 	char absoluteLibPpath[FILEPATH_MAXSIZE];
-	//create platform independant libname (.dll, .so, ...)
-	sharedLib_createFullLibName(PYTHON_LOADER,(char *)&filename,FILEPATH_MAXSIZE);
-	//create absolute lib name
-	snprintf(absoluteLibPpath, FILEPATH_MAXSIZE,"%s%s%s",dd_r,PATH_SEPERATOR, filename);
-	simpleLog_log("Loading %s",absoluteLibPpath);
-	hPythonInterface=sharedLib_load(absoluteLibPpath);
-	if (hPythonInterface == NULL){
-		snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading python_loader: %s, is python installed?",absoluteLibPpath);
-		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
-		return 0; //TODO return -1 when engine supports this
+	int i=0;
+	while((pythonNames[i]!=NULL)&&(hPython==NULL)){
+		//create platform independant libname (.dll, .so, ...)
+		sharedLib_createFullLibName(pythonNames[i],(char *)&filename,FILEPATH_MAXSIZE);
+		printf("libname: %s\n", filename);
+// 		simpleLog_log("Loading %s",filename);
+		hPython=sharedLib_load(filename);
+		if (hPython == NULL){
+			snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading python_loader: %s, is python installed?",filename);
+// 			callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
+		}
+		i++;
 	}
-	PYTHON_INIT=(INIT_FUNC)sharedLib_findAddress(hPythonInterface, "python_init");
-	PYTHON_RELEASE=(RELEASE_FUNC)sharedLib_findAddress(hPythonInterface, "python_release");
-	PYTHON_LOAD=(LOAD_FUNC)sharedLib_findAddress(hPythonInterface, "python_load");
-	PYTHON_HANDLEEVENT=(HANDLE_FUNC)sharedLib_findAddress(hPythonInterface, "python_handleEvent");
-	if (!(PYTHON_INIT || PYTHON_RELEASE || PYTHON_LOAD || PYTHON_HANDLEEVENT)){
-		snprintf(logBuf,FILEPATH_MAXSIZE,"error binding function()");
-		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
-		return 0; //TODO return -1 when engine supports this
-	}
-	simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
-	PYTHON_LOAD(callback,interfaceId, logFileName, useTimeStamps, logLevel);
+// 	printf("hpython: %p\n", hPython);
+	bindPythonFunctions(hPython);
+	//simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
+	python_load(callback,interfaceId, logFileName, useTimeStamps, logLevel);
 	return 0;
 }
 
@@ -224,8 +213,8 @@ releaseStatic()
 {
 	simpleLog_log("releaseStatic()");
 	// release Python part of the interface
-	if (hPythonInterface!=NULL)
-		PYTHON_RELEASE(0); //TODO FIXME: Teamid is currently unused!
+	if (hPython!=NULL)
+		python_release(0); //TODO FIXME: Teamid is currently unused!
 
 	// release C part of the interface
 	util_finalize();
@@ -252,11 +241,11 @@ enum LevelOfSupport CALLING_CONV proxy_skirmishAI_getLevelOfSupportFor(
 
 int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallback* aiCallback) {
 	int ret;
-	if (PYTHON_INIT==NULL){ //TODO: remove when Log_exception works
+	if (hPython==NULL){ //TODO: remove when Log_exception works
 		simpleLog_log("proxy_skirmishAI_init(): python wasn't initalized!");
 		return 0;
 	}
-        ret = PYTHON_INIT(teamId, aiCallback);
+        ret = python_init(teamId, aiCallback);
 	if (ret) {
                 simpleLog_log("could not load skirmish ai");
                 return 0; //FIXME aireload should always work to make developing easy
@@ -267,12 +256,12 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 
 int CALLING_CONV proxy_skirmishAI_release(int teamId)
 {
-	if (PYTHON_RELEASE==NULL){ //TODO: remove when Log_exception works
+	if (hPython==NULL){ //TODO: remove when Log_exception works
 		simpleLog_log("proxy_skirmishAI_release(): python wasn't initalized!");
 		return 0;
 	}
 	simpleLog_log("proxy_skirmishAI_release()");
-	return PYTHON_RELEASE(teamId);
+	return python_release(teamId);
 }
 
 int outputLogCount=0;
@@ -280,7 +269,7 @@ int outputLogCount=0;
 int CALLING_CONV proxy_skirmishAI_handleEvent(
 		int teamId, int topic, const void* data)
 {
-	if (PYTHON_RELEASE==NULL){ //TODO: remove when Log_exception works
+	if (hPython==NULL){ //TODO: remove when Log_exception works
 		if (outputLogCount<5){
 			outputLogCount++;
 			simpleLog_log("proxy_skirmishAI_handleEvent(): python wasn't initalized!");
@@ -290,7 +279,7 @@ int CALLING_CONV proxy_skirmishAI_handleEvent(
 		}
 		return 0;
 	}
-	return PYTHON_HANDLEEVENT(teamId, topic, data);
+	return python_handleEvent(teamId, topic, data);
 }
 
 
