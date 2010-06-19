@@ -37,6 +37,52 @@
 
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
+// Python functions pointers
+void*  (*PYDICT_GETITEMSTRING)(void*, const char*)=NULL;
+void*  (*PY_BUILDVALUE)(char*, ...)=NULL;
+int    (*PYDICT_SETITEM)(void*, void*, void*)=NULL;
+void   (*PYERR_PRINT)()=NULL;
+double (*PYFLOAT_ASDOUBLE)(void*)=NULL;
+void*  (*PYFLOAT_FROMDOUBLE)(double)=NULL;
+void*  (*PYIMPORT_IMPORT)(void*)=NULL;
+void*  (*PYINT_FROMLONG)(long)=NULL;
+int    (*PYLIST_APPEND)(void *, void*)=NULL;
+void*  (*PYLIST_GETITEM)(void *,Py_ssize_t)=NULL;
+void*  (*PYLIST_NEW)(Py_ssize_t)=NULL;
+int    (*PYLIST_SETITEM)(void*, Py_ssize_t, void*)=NULL;
+void*  (*PYOBJECT_CALLOBJECT)(void*, void*)=NULL;
+void*  (*PYOBJECT_GETATTRSTRING)(void*, const char*)=NULL;
+void*  (*PYSTRING_FROMSTRING)(const char*)=NULL;
+void*  (*PYTUPLE_GETITEM)(void*, Py_ssize_t)=NULL;
+int    (*PYTYPE_READY)(void*)=NULL;
+void   (*PY_FINALIZE)()=NULL;
+const char* (*PY_GETVERSION)()=NULL;
+void   (*PY_INITIALIZE)()=NULL;
+void   (*_PY_NONESTRUCT)=NULL;
+
+//Python functions
+#define PyDict_GetItemString   PYDICT_GETITEMSTRING
+#define Py_BuildValue          PY_BUILDVALUE
+#define PyDict_SetItem         PYDICT_SETITEM
+#define PyErr_Print            PYERR_PRINT
+#define PyFloat_AsDouble       PYFLOAT_ASDOUBLE
+#define PyFloat_FromDouble     PYFLOAT_FROMDOUBLE
+#define PyImport_Import        PYIMPORT_IMPORT
+#define PyInt_FromLong         PYINT_FROMLONG
+#define PyList_Append          PYLIST_APPEND
+#define PyList_GetItem         PYLIST_GETITEM
+#define PyList_New             PYLIST_NEW
+#define PyList_SetItem         PYLIST_SETITEM
+#define PyObject_CallObject    PYOBJECT_CALLOBJECT
+#define PyObject_GetAttrString PYOBJECT_GETATTRSTRING
+#define PyString_FromString    PYSTRING_FROMSTRING
+#define PyTuple_GetItem        PYTUPLE_GETITEM
+#define PyType_Ready           PYTYPE_READY
+#define Py_Finalize            PY_FINALIZE
+#define Py_GetVersion          PY_GETVERSION
+#define Py_Initialize          PY_INITIALIZE
+#define _Py_NoneStruct         _PY_NONESTRUCT
+
 {% exec import os.path %}
 {% for file in ("converter.c", "event_wrapper.c", "command_wrapper.c", "callback.c", ) %}
 	{% include os.path.join(templatedir,file) %}
@@ -136,6 +182,32 @@ python_release(int teamId)
 	Py_Finalize();
 	return 0;
 }
+
+void bindAndLoadPython(){
+	void *hPython=sharedLib_load("/usr/lib/libpython2.6.so");
+	PYDICT_GETITEMSTRING=sharedLib_findAddress(hPython, "PyDict_GetItemString");
+	PY_BUILDVALUE=sharedLib_findAddress(hPython, "Py_BuildValue");
+	PYDICT_SETITEM=sharedLib_findAddress(hPython, "PyDict_SetItem");
+	PYERR_PRINT=sharedLib_findAddress(hPython, "PyErr_Print");
+	PYFLOAT_ASDOUBLE=sharedLib_findAddress(hPython, "PyFloat_AsDouble");
+	PYFLOAT_FROMDOUBLE=sharedLib_findAddress(hPython, "PyFloat_FromDouble");
+	PYIMPORT_IMPORT=sharedLib_findAddress(hPython, "PyImport_Import");
+	PYINT_FROMLONG=sharedLib_findAddress(hPython, "PyInt_FromLong");
+	PYLIST_APPEND=sharedLib_findAddress(hPython, "PyList_Append");
+	PYLIST_GETITEM=sharedLib_findAddress(hPython, "PyList_GetItem");
+	PYLIST_NEW=sharedLib_findAddress(hPython, "PyList_New");
+	PYLIST_SETITEM=sharedLib_findAddress(hPython, "PyList_SetItem");
+	PYOBJECT_CALLOBJECT=sharedLib_findAddress(hPython, "PyObject_CallObject");
+	PYOBJECT_GETATTRSTRING=sharedLib_findAddress(hPython, "PyObject_GetAttrString");
+	PYSTRING_FROMSTRING=sharedLib_findAddress(hPython, "PyString_FromString");
+	PYTUPLE_GETITEM=sharedLib_findAddress(hPython, "PyTuple_GetItem");
+	PYTYPE_READY=sharedLib_findAddress(hPython, "PyType_Ready");
+	PY_FINALIZE=sharedLib_findAddress(hPython, "Py_Finalize");
+	PY_GETVERSION=sharedLib_findAddress(hPython, "Py_GetVersion");
+	PY_INITIALIZE=sharedLib_findAddress(hPython, "Py_Initialize");
+	_PY_NONESTRUCT=sharedLib_findAddress(hPython, "_Py_NoneStruct");
+}
+
 
 /*
 * Initialize Python

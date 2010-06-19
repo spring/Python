@@ -172,16 +172,11 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
 	set_source_files_properties(${myGeneratedFilesmyBuilderDir} PROPERTIES GENERATED TRUE)
 
-
 	aux_source_directory(${mySourceDir} mySources)
 	INCLUDE_DIRECTORIES(${mySourceDir})
-	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC})
-	add_dependencies(${myTarget} ${myLoader})
-	add_library(${myLoader} MODULE ${ai_common_SRC} ${CUtils_SRC} "${myGeneratedDir}/ai.c")
+	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC} "${myGeneratedDir}/ai.c")
 	FixLibName(${myTarget})
-	FixLibName(${myLoader})
 
-	target_link_libraries(${myLoader} ${PYTHON_LIBRARY})
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files
@@ -191,7 +186,6 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	install(DIRECTORY "${myGeneratedDir}/PyAI" DESTINATION "${myInstDataDir}" FILES_MATCHING PATTERN REGEX ".*\\.py$")
 	# Install the library
 	install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
-	install(TARGETS   ${myLoader}      DESTINATION "${myInstLibsDir}")
 	# Install the NullPythonAI
 	install(DIRECTORY  "${myDir}/${myNullPython}/src/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.py$")
 	install(DIRECTORY  "${myDir}/${myNullPython}/data/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.lua$")
