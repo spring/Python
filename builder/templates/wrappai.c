@@ -120,26 +120,24 @@ bindPythonFunctions(void *hPython)
 static PyObject* wrapper;
 static const PyObject* sys_module;
 
-#define LOG simpleLog_log
-
 /*add to search path and load module */
 PyObject *pythonLoadModule(const char *modul, const char* path)
 {
 	PyObject *res=NULL;
 	PyObject *tmpname;
 	if (path!=NULL){
-		LOG("Including Python search path %s", path);
+		simpleLog_log("Including Python search path %s", path);
 		PyObject* pathlist = PyObject_GetAttrString((PyObject*)sys_module, "path");
 		PyList_Append(pathlist, PyString_FromString(path));
 	}
 	tmpname=PyString_FromString(modul);
 	res=PyImport_Import(tmpname);
 	if (!res){
-		LOG("Could not load python module %s\"%s\"",path,modul);
+		simpleLog_log("Could not load python module %s\"%s\"",path,modul);
 		PyErr_Print();
 		return res;
 	}
-	LOG("Loaded Python Module %s in %s",modul, path);
+	simpleLog_log("Loaded Python Module %s in %s",modul, path);
 	Py_DECREF(tmpname);
 	return res;
 }
@@ -156,12 +154,12 @@ python_handleEvent(int teamId, int topic, const void* data)
 	}
 	pfunc=PyObject_GetAttrString((PyObject*)wrapper,PYTHON_INTERFACE_HANDLE_EVENT);
 	if (!pfunc){
-		LOG("failed to extract function from module");
+		simpleLog_log("failed to extract function from module");
 	return -1;
 	}
 	args = Py_BuildValue("(iiO)",teamId, topic, event_convert(topic,(void*)data));
 	if (!args){
-	    LOG("failed to build args");
+	    simpleLog_log("failed to build args");
 	    return -1;
 	}
 	PyObject_CallObject(pfunc, args);
@@ -173,13 +171,13 @@ python_handleEvent(int teamId, int topic, const void* data)
 EXPORT(int)
 python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 {
-	LOG("python_init()");
+	simpleLog_log("python_init()");
 	const char* className = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
 			PYTHON_SKIRMISH_AI_PROPERTY_CLASS_NAME);
-	LOG("Name of the AI: %s",className);
+	simpleLog_log("Name of the AI: %s",className);
 	const char* modName = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
 			PYTHON_SKIRMISH_AI_PROPERTY_MODULE_NAME);
-	LOG("Python Class Name: %s",modName);
+	simpleLog_log("Python Class Name: %s",modName);
 
 	const char* aipath = aiCallback->Clb_DataDirs_getConfigDir(teamId);
 	PyObject* aimodule = pythonLoadModule(modName, aipath);	
@@ -196,7 +194,7 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 		return -1;
 
 	if (PyType_Ready(&PyAICallback_Type) < 0){
-		LOG("Error PyType_Ready()");
+		simpleLog_log("Error PyType_Ready()");
 		PyErr_Print();
 		return -1;
 	}
@@ -207,12 +205,10 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 EXPORT(int)
 python_release(int teamId)
 {
-	LOG("python_release()");
+	simpleLog_log("python_release()");
 	Py_Finalize();
 	return 0;
 }
-
-
 
 /*
 * Initialize Python
@@ -222,10 +218,10 @@ python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, c
 {
 
 	simpleLog_init(logFileName, useTimeStamps,logLevel, true);
-	LOG("python_load()");
+	simpleLog_log("python_load()");
 	//Initalize Python
 	Py_Initialize();
-	LOG("Initialized python %s",Py_GetVersion());
+	simpleLog_log("Initialized python %s",Py_GetVersion());
 	sys_module=pythonLoadModule("sys", NULL);
 	if (!sys_module)
 		return -1;

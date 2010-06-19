@@ -58,7 +58,7 @@ int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLe
 	while((pythonNames[i]!=NULL)&&(hPython==NULL)){
 		//create platform independant libname (.dll, .so, ...)
 		sharedLib_createFullLibName(pythonNames[i],(char *)&filename,FILEPATH_MAXSIZE);
- 		simpleLog_log("Loading %s",filename);
+		simpleLog_log("Trying to load %s",filename);
 		hPython=sharedLib_load(filename);
 		i++;
 	}
@@ -68,7 +68,7 @@ int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLe
 		return 1;
 	}
 	bindPythonFunctions(hPython);
-	simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
+	simpleLog_log("Python loaded successfully");
 	python_load(callback,interfaceId, logFileName, useTimeStamps, logLevel);
 	return 0;
 }
@@ -234,50 +234,6 @@ enum LevelOfSupport CALLING_CONV proxy_skirmishAI_getLevelOfSupportFor(
 	return LOS_Unknown;
 }
 
-int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallback* aiCallback) {
-	int ret;
-	if (hPython==NULL){ //TODO: remove when Log_exception works
-		simpleLog_log("proxy_skirmishAI_init(): python wasn't initalized!");
-		return 0;
-	}
-        ret = python_init(teamId, aiCallback);
-	if (ret) {
-                simpleLog_log("could not load skirmish ai");
-                return 0; //FIXME aireload should always work to make developing easy
-	}
-	simpleLog_log("proxy_skirmishAI_init()");
-	return 0;
-}
-
-int CALLING_CONV proxy_skirmishAI_release(int teamId)
-{
-	if (hPython==NULL){ //TODO: remove when Log_exception works
-		simpleLog_log("proxy_skirmishAI_release(): python wasn't initalized!");
-		return 0;
-	}
-	simpleLog_log("proxy_skirmishAI_release()");
-	return python_release(teamId);
-}
-
-int outputLogCount=0;
-
-int CALLING_CONV proxy_skirmishAI_handleEvent(
-		int teamId, int topic, const void* data)
-{
-	if (hPython==NULL){ //TODO: remove when Log_exception works
-		if (outputLogCount<5){
-			outputLogCount++;
-			simpleLog_log("proxy_skirmishAI_handleEvent(): python wasn't initalized!");
-		}else if (outputLogCount==5){
-			outputLogCount++;
-			simpleLog_log("proxy_skirmishAI_handleEvent(): suppressed: python wasn't initalized!");
-		}
-		return 0;
-	}
-	return python_handleEvent(teamId, topic, data);
-}
-
-
 EXPORT(const struct SSkirmishAILibrary*)
 loadSkirmishAILibrary(const char* const shortName, const char* const version) 
 {
@@ -289,9 +245,9 @@ loadSkirmishAILibrary(const char* const shortName, const char* const version)
 		mySSkirmishAILibrary->getLevelOfSupportFor =
 			&proxy_skirmishAI_getLevelOfSupportFor;
 
-		mySSkirmishAILibrary->init = &proxy_skirmishAI_init;
-		mySSkirmishAILibrary->release = &proxy_skirmishAI_release;
-		mySSkirmishAILibrary->handleEvent = &proxy_skirmishAI_handleEvent;
+		mySSkirmishAILibrary->init = &python_init;
+		mySSkirmishAILibrary->release = &python_release;
+		mySSkirmishAILibrary->handleEvent = &python_handleEvent;
 	}
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary() done");
 	return mySSkirmishAILibrary;
