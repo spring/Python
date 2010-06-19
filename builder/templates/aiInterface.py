@@ -10,6 +10,10 @@ def dict_helper(vals, keys):
 	for i, v in enumerate(vals):
 		yield (keys[i],v)
 
+def check_float3(value):
+	assert isinstance(value, tuple)
+	assert reduce(lambda x,y: x and y, [isinstance(i, float) for i in value])
+
 {% for cmd in cmd_types %}
 {{cmd}}={{str(cmd_types[cmd])}}
 {% endfor %}

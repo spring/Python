@@ -179,6 +179,7 @@ def buildclasses(funclist):
 			# strip pyfuncname of specialformat
 			pyfuncname = pyfuncname.split("0")[-1]
 		docstring = "The arguments are:\n"
+		assertstring = ""
 		docu=False
 		for arg in args[1:]:
 			docu=True
@@ -187,11 +188,22 @@ def buildclasses(funclist):
 			docstring += "\t" + arg[0]+": "
 			if "SAIFloat3" in arg[1]:
 				docstring += "(float, float, float)"
+				assertstring += cInd + "check_float3("+arg[0]+")\n"
 			elif "char" in arg[1]:
 				docstring += "string"
+				assertstring += cInd + "assert isinstance("+arg[0]+", str)\n"
 			elif "void" in arg[1]:
 				docstring = "This function should not be used directly. Use the Command class instead. If you want to use this function directly, see the command class implementation for documentation."
 				break
+			elif "float" in arg[1]:
+				docstring += arg[1]
+				assertstring += cInd + "assert isinstance("+arg[0]+", float)\n"
+			elif "int" in arg[1]:
+				docstring += arg[1]
+				assertstring += cInd + "assert isinstance("+arg[0]+", int)\n"
+			elif "bool" in arg[1]:
+				docstring += arg[1]
+				assertstring += cInd + "assert isinstance("+arg[0]+", int)\n"
 			else:
 				docstring += arg[1]
 			docstring += "\n"
@@ -201,6 +213,7 @@ def buildclasses(funclist):
 		functionstring  = fInd + "@staticmethod\n"
 		functionstring += fInd + "def "+pyfuncname+"("+pyarg+"):\n"
 		functionstring += cInd + '"""'+ docstring + '"""\n'
+		functionstring += assertstring
 		functionstring += cInd + call + "\n"
 		
 		if not retval.has_key(classes[-1]):
