@@ -216,8 +216,6 @@ python_release(int teamId)
 EXPORT (int)
 python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel)
 {
-
-	simpleLog_init(logFileName, useTimeStamps,logLevel, true);
 	simpleLog_log("python_load()");
 	//Initalize Python
 	Py_Initialize();
@@ -228,6 +226,6 @@ python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, c
 	wrapper=pythonLoadModule(PYTHON_INTERFACE_MODULE_NAME,callback->DataDirs_getConfigDir(interfaceId));
 	if (!wrapper)
 		return -1;
-		
+
 	return 0;
 }
