@@ -70,6 +70,7 @@ EXPORT(int) unloadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version);
 EXPORT(int) unloadAllSkirmishAILibraries();
+void bindPythonFunctions(void *hPython);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -25,6 +25,7 @@
 #include <Python.h>
 #include "ai.h"
 
+
 #include "CUtils/SimpleLog.h"
 #include "CUtils/SharedLibrary.h"
 
@@ -39,7 +40,7 @@
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
 // Python functions pointers
-void*  (*PYDICT_GETITEMSTRING)(void*, const char*) ;
+void*  (*PYDICT_GETITEMSTRING)(void*, const char*)=NULL;
 void*  (*PY_BUILDVALUE)(char*, ...)=NULL;
 int    (*PYDICT_SETITEM)(void*, void*, void*)=NULL;
 void   (*PYERR_PRINT)(void)=NULL;
@@ -223,9 +224,7 @@ python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, c
 	simpleLog_init(logFileName, useTimeStamps,logLevel, true);
 	LOG("python_load()");
 	//Initalize Python
-	printf("python initialized %s\n", Py_GetVersion());
 	Py_Initialize();
-	printf("python initialized\n");
 	LOG("Initialized python %s",Py_GetVersion());
 	sys_module=pythonLoadModule("sys", NULL);
 	if (!sys_module)

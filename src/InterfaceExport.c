@@ -47,33 +47,28 @@ sharedLib_t hPython;
 #endif
 int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLevel){
 	const char* pythonNames [] = { 
-		"python26", "python2.6",
-		"python25", "python2.5",
-		"python24", "python2.4",
+		"python2.6", "python26",
+		"python2.5", "python25",
+		"python2.4", "python24",
 		NULL };
 
 	char filename[FILEPATH_MAXSIZE];
 	char logBuf[FILEPATH_MAXSIZE];
-	const char* const dd_r =
-		callback->AIInterface_Info_getValueByKey(interfaceId,
-		AI_INTERFACE_PROPERTY_DATA_DIR);
-	char absoluteLibPpath[FILEPATH_MAXSIZE];
 	int i=0;
 	while((pythonNames[i]!=NULL)&&(hPython==NULL)){
 		//create platform independant libname (.dll, .so, ...)
 		sharedLib_createFullLibName(pythonNames[i],(char *)&filename,FILEPATH_MAXSIZE);
-		printf("libname: %s\n", filename);
-// 		simpleLog_log("Loading %s",filename);
+ 		simpleLog_log("Loading %s",filename);
 		hPython=sharedLib_load(filename);
-		if (hPython == NULL){
-			snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading python_loader: %s, is python installed?",filename);
-// 			callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
-		}
 		i++;
 	}
-// 	printf("hpython: %p\n", hPython);
+	if (hPython == NULL){
+		snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading python_loader: %s, is python installed?",filename);
+		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
+		return 1;
+	}
 	bindPythonFunctions(hPython);
-	//simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
+	simpleLog_log("Python loader successfully loaded, trying to load the python interpreter...");
 	python_load(callback,interfaceId, logFileName, useTimeStamps, logLevel);
 	return 0;
 }
