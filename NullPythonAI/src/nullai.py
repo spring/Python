@@ -22,9 +22,8 @@
 import PyAI
 
 from PyAI import BaseAI
-from PyAI import Command
-from PyAI import UnitDef
-from PyAI import Map, Cheats, Resource
+from PyAI import UnitDef, Map, Cheats, Resource, Command
+
 
 class NullPythonAI(BaseAI):
 	def __init__(self, team, pyclb):
@@ -36,37 +35,30 @@ class NullPythonAI(BaseAI):
 		self.bindFunction(self.eventRelease, PyAI.EVENT_RELEASE)
 		
 		self.units = {}
-		self.command = None
-		self.unitdef = None
-		self.resource = None
 	def eventUnitCreated(self, data):
 		print "Unit created (unit builder)", self.frame, data["unit"], data["builder"]
-		self.units[data["unit"]]  = data["unit"]
+		self.units[data["unit"]]  = data["unit"] 
 
 	def eventRelease(self, data):
-		print "eventRelease"
+		self.console.release()
+
 	def eventInit(self,data):
 		print "eventInit", self.frame
 		self.units = {}
-		self.command = Command(self.team)
-		self.unitdef = UnitDef(self.team)
-		self.resource = Resource(self.team)
-		self.map = Map(self.team)
-		print "Map width: ", self.map.getWidth(), " Height: ", self.map.getHeight()
+		print "Map width: ", Map.getWidth(), " Height: ", Map.getHeight()
 		
 	def cheatInit(self):
 		#Cheat start unit
 		print "cheatInit"
 		if (len(self.units)>0): #only cheat when no units are avaiable
 			return
-		self.cheats = Cheats(self.team)
-		self.cheats.setEnabled(True)
-		self.command.giveMeNewUnitCheat(self.unitdef.getUnitDefByName("armcom"), self.map.getStartPos())
+		Cheats.setEnabled(True)
+		Command.giveMeNewUnitCheat(UnitDef.getUnitDefByName("armcom"), Map.getStartPos())
 		
-		print self.resource.getCount()
-		for i in xrange(self.resource.getCount()):
-			print i, self.resource.getName(i)
-			self.command.giveMeResourceCheat(i,1000)
+		print Resource.getCount()
+		for i in xrange(Resource.getCount()):
+			print i, Resource.getName(i)
+			Command.giveMeResourceCheat(i,1000)
 
 	def eventUpdate(self,data):
 		if (self.frame == -1):

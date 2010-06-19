@@ -2,6 +2,8 @@
 
 # This file was generated {% now %}
 
+import PyAI.team as teamModule
+
 def dict_helper(vals, keys):
 	i = len(vals)
 	assert i==len(keys)
@@ -22,9 +24,6 @@ NUM_EVENTS = {{len(evt_types)}}
 
 {% for classname in classes %}
 class {{classname}}(object):
-  def __init__(self, team):
-    self.callback=team.callback
-    self.teamId=team.teamId
 {% for function in classes[classname] %}
 {{function}}
 {% endfor %}
@@ -32,10 +31,7 @@ class {{classname}}(object):
 {% endfor %}
 
 class Command(object):
-  def __init__(self, team):
-    self.callback = team.callback
-    self.teamId = team.teamId
-    self.id=0
+	id = 0
 {% for function in commands %}
 {{commands[function]}}
 {% endfor %}

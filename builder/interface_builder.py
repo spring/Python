@@ -21,13 +21,16 @@
 
 from helper import joinstrings
 
-INDENTATION = "  "
+INDENTATION = "\t"
+# indentation
+fInd = INDENTATION
+cInd = 2*INDENTATION
+
+TEAMID = "teamModule._currentTeam.teamId"
+CALLBACK = "teamModule._currentTeam.callback"
 
 def buildclasses(funclist):
-	# indentation
-	fInd = INDENTATION
-	cInd = 2*INDENTATION
-	
+
 	retval = {}
 	
 	# special cases with no pattern
@@ -37,7 +40,7 @@ def buildclasses(funclist):
 		if not funcname:
 			continue
 		args = funclist[funcname][1]
-		call="return self.callback."+funcname+"("
+		call="return "+CALLBACK+"."+funcname+"("
 		# parse function name
 		# standart pattern:
 		#				Clb_<classname>*_[0<specialformat>0]<functionname>
@@ -78,8 +81,8 @@ def buildclasses(funclist):
 					farg=""
 					for name, type in args[1:]:
 						farg += name+","
-					pyarg = "self,"+farg[:-1]
-					farg = "self.teamId,"+farg
+					pyarg = farg[:-1]
+					farg = TEAMID+","+farg
 					call = call+farg[:-1]+")"
 			elif "MULTI1VALS" in funcname:
 				pyfuncname = args[-2][0][:-2]
@@ -97,9 +100,9 @@ def buildclasses(funclist):
 				
 				i = funcname.find("MULTI1VALS")
 				sizefunc = funcname[:i]+"MULTI1SIZE"+funcname[i+len("MULTI1VALS"):]
-				pyarg = "self"+farg[:-1]
-				farg = "self.teamId,"+farg
-				farg += "None, self.callback."+sizefunc+"("+farg[:-1]+")"
+				pyarg = farg[:-1]
+				farg = TEAMID+","+farg
+				farg += "None, "+CALLBACK+"."+sizefunc+"("+farg[:-1]+")"
 				call = call+farg+")"
 			elif "MULTI1FETCH3" in funcname:
 				# Clb_0MULTI1FETCH3WeaponDefByName0WeaponDef
@@ -107,8 +110,8 @@ def buildclasses(funclist):
 				farg=""
 				for name, type in args[1:]:
 					farg += name+","
-				pyarg = "self,"+farg[:-1]
-				farg = "self.teamId,"+farg
+				pyarg = farg[:-1]
+				farg = TEAMID+","+farg
 				call = call+farg[:-1]+")"
 			else:
 				raise Exception("No pattern for function "+funcname)
@@ -136,9 +139,9 @@ def buildclasses(funclist):
 				
 				i = funcname.find("ARRAY1VALS")
 				sizefunc = funcname[:i]+"ARRAY1SIZE"+funcname[i+len("ARRAY1VALS"):]
-				pyarg = "self,"+farg[:-1]
-				farg = "self.teamId,"+farg
-				farg += "None, self.callback."+sizefunc+"("+farg[:-1]+")"
+				pyarg = farg[:-1]
+				farg = TEAMID+","+farg
+				farg += "None, "+CALLBACK+"."+sizefunc+"("+farg[:-1]+")"
 				call = call+farg+")"
 			elif "MAP" in pyfuncname:
 				# in the current master branch, there are three MAP functions which in 
@@ -156,8 +159,8 @@ def buildclasses(funclist):
 					newargs = args[1:-1] # not the array
 					for name, type in newargs:
 						farg += name+","
-					tmp = "vals = self.callback."+funcname+"(self.teamId,"+farg[:-1]+")\n"
-					call = tmp + cInd+ "keys = self.callback."+keyfunc+"(self.teamId,"+farg[:-1]+")\n"
+					tmp = "vals = "+CALLBACK+"."+funcname+"("+TEAMID+","+farg[:-1]+")\n"
+					call = tmp + cInd+ "keys = "+CALLBACK+"."+keyfunc+"("+TEAMID+","+farg[:-1]+")\n"
 					
 					tmp = ""
 					tmp += cInd + "return dict(dict_helper(vals, keys))\n"
@@ -169,8 +172,8 @@ def buildclasses(funclist):
 				farg=""
 				for name, type in args[1:]:
 					farg += name+","
-				pyarg = "self,"+farg[:-1]
-				farg = "self.teamId,"+farg
+				pyarg = farg[:-1]
+				farg = TEAMID+","+farg
 				call = call+farg[:-1]+")"
 
 			# strip pyfuncname of specialformat
@@ -195,7 +198,8 @@ def buildclasses(funclist):
 		if not docu:
 			docstring= "no arguments"
 
-		functionstring = fInd + "def "+pyfuncname+"("+pyarg+"):\n"
+		functionstring  = fInd + "@staticmethod\n"
+		functionstring += fInd + "def "+pyfuncname+"("+pyarg+"):\n"
 		functionstring += cInd + '"""'+ docstring + '"""\n'
 		functionstring += cInd + call + "\n"
 		
@@ -240,15 +244,19 @@ def commandfuncs(commands):
 		else:
 			dictbuild += "}"
 		
-		code = INDENTATION+"def "+funcname+"(self,"
+		code  = fInd+"@staticmethod\n"
+		code += fInd+"def "+funcname+"("
+		args = ""
 		for arg in pyarglist:
-			code += arg + ","
-		code = code[:-1]+"):\n"
-		code += 2*INDENTATION + dictbuild + "\n"
-		code += 2*INDENTATION + "self.id+=1" + "\n"
-		code += 2*INDENTATION + "retval = self.callback.Clb_Engine_handleCommand(self.teamId, -1, self.id,"+command+",data)" + "\n"
-		code += 2*INDENTATION + "if retval:\n"
-		code += 3*INDENTATION + "return self.id, retval\n"
-		code += 2*INDENTATION + "return self.id\n"
+			args += arg + ","
+		if args:
+			args = args[:-1]
+		code += args+"):\n"
+		code += cInd + dictbuild + "\n"
+		code += cInd + "Command.id+=1" + "\n"
+		code += cInd + "retval = "+CALLBACK+".Clb_Engine_handleCommand("+TEAMID+", -1, Command.id,"+command+",data)" + "\n"
+		code += cInd + "if retval:\n"
+		code += cInd + INDENTATION + "return Command.id, retval\n"
+		code += cInd + "return Command.id\n"
 		funcs[funcname]=code
 	return funcs

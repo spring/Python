@@ -23,3 +23,7 @@ class Team(object):
   def __init__(self, teamId, callback):
     self.teamId=teamId
     self.callback=callback
+
+
+
+_currentTeam = None # current active Team
