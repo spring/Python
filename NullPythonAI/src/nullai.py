@@ -40,7 +40,7 @@ class NullPythonAI(BaseAI):
 		self.units[data["unit"]]  = data["unit"] 
 
 	def eventRelease(self, data):
-		self.console.release()
+		print "eventRelease"
 
 	def eventInit(self,data):
 		print "eventInit", self.frame
