@@ -137,13 +137,16 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 		PyErr_Print();
 		return res;
 	}
-	simpleLog_log("Loaded Python Module %s in %s",modul, path);
+	if (path==NULL)
+		simpleLog_log("Loaded Python Module %s in default search path",modul);
+	else
+		simpleLog_log("Loaded Python Module %s in %s",modul, path);
 	Py_DECREF(tmpname);
 	return res;
 }
 
 
-EXPORT(int)
+int
 python_handleEvent(int teamId, int topic, const void* data)
 {
 	PyObject * pfunc;
@@ -168,7 +171,7 @@ python_handleEvent(int teamId, int topic, const void* data)
 }
 
 /* Initialize the AI for team teamId */
-EXPORT(int)
+int
 python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 {
 	simpleLog_log("python_init()");
@@ -202,19 +205,19 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 }
 
 /*release an ai*/
-EXPORT(int)
+int
 python_release(int teamId)
 {
+	//TODO: call python-release function
 	simpleLog_log("python_release()");
-	Py_Finalize();
 	return 0;
 }
 
 /*
-* Initialize Python
-*/
-EXPORT (int)
-python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel)
+ * Initialize the Python Interpreter
+ * @return 0 on success
+ */
+int python_load(const struct SAIInterfaceCallback* callback,const int interfaceId)
 {
 	simpleLog_log("python_load()");
 	//Initalize Python
@@ -228,4 +231,11 @@ python_load(const struct SAIInterfaceCallback* callback,const int interfaceId, c
 		return -1;
 
 	return 0;
+}
+
+/*
+ * Unload the Python Interpreter
+ */
+void python_unload(void){
+	Py_Finalize();
 }

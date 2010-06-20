@@ -25,11 +25,10 @@
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 
-EXPORT(int) python_init(int teamId, const struct SSkirmishAICallback* aiCallback);
-EXPORT(int) python_release(int teamId);
-EXPORT(int) python_load(const struct SAIInterfaceCallback* callback, int interfaceId, const char* logFileName, bool useTimeStamps, int logLevel);
-EXPORT(int) python_handleEvent(int teamId, int topic, const void* data);
-
-
+int python_init(int teamId, const struct SSkirmishAICallback* aiCallback);
+int python_release(int teamId);
+int python_handleEvent(int teamId, int topic, const void* data);
+int python_load(const struct SAIInterfaceCallback* callback, int interfaceId);
+void python_unload(void);
 
 #endif // _AIEXPORT_H

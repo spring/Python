@@ -69,7 +69,7 @@ int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLe
 	}
 	bindPythonFunctions(hPython);
 	simpleLog_log("Python loaded successfully");
-	python_load(callback,interfaceId, logFileName, useTimeStamps, logLevel);
+	python_load(callback,interfaceId);
 	return 0;
 }
 
@@ -196,7 +196,7 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 		myShortName, myVersion);
 	simpleLog_log("Using read/write data-directory: %s",
 		callback->DataDirs_getWriteableDir(interfaceId));
-	simpleLog_log("Using log file: %s", propFilePath);
+	simpleLog_log("Using log file: %s", logFilePath);
 	simpleLog_log("Loading Python");
 	int res=loadPythonInterpreter(logFilePath, useTimeStamps, logLevel);
 	FREE(logFile);
@@ -263,8 +263,7 @@ unloadSkirmishAILibrary(const char* const shortName, const char* const version)
 
 EXPORT(int)
 unloadAllSkirmishAILibraries() {
-	// TODO FIXME what is the difference from the function above
 	simpleLog_log("unloadAllSkirmishAILibraries()");
-        releaseStatic();
+	python_unload();
 	return 0;
 }
