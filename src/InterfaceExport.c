@@ -73,10 +73,25 @@ int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLe
 	return 0;
 }
 
-/*
+/**
+* This function is called right after the library is dynamically loaded.
+* It can be used to initialize variables and to check or prepare
+* the environment (os, engine, filesystem, ...).
+* @see releaseStatic()
+*
+* [optional]
+* An AI Interface not exporting this function is still valid.
+*
 * opens the log file and tries to load an python interpreter and initalizes
 * the basic stuff, the ai is then loaded in 
 *
+*
+*
+* @param       staticGlobalData contains global data about the engine and the
+*                           environment; is guaranteed to be valid till
+*                           releaseStatic() is called.
+* @return     0: ok
+*          != 0: error
 */
 EXPORT(int)
 initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
@@ -202,20 +217,40 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 	FREE(logFile);
 	return res;
 }
-
+/**
+* This function is called right right before the library is unloaded.
+* It can be used to deinitialize variables and to cleanup the environment,
+* for example the filesystem.
+*
+* See also initStatic().
+*
+* [optional]
+* An AI Interface not exporting this function is still valid.
+*
+* @return     0: ok
+*          != 0: error
+*/
 EXPORT(int)
 releaseStatic()
 {
 	simpleLog_log("releaseStatic()");
-	// release Python part of the interface
-	if (hPython!=NULL)
-		python_release(0); //TODO FIXME: Teamid is currently unused!
-
+	python_unload();
+	hPython=NULL;
 	// release C part of the interface
 	util_finalize();
 	return 0;
 }
 
+
+/**
+* Level of Support for a specific engine version and AI interface version.
+*
+* [optional]
+* An AI not exporting this function is still valid.
+*
+* @return      the level of support for the supplied engine and AI interface
+*                      versions
+*/
 EXPORT(enum LevelOfSupport)
 getLevelOfSupportFor(const char* engineVersion, int engineAIInterfaceGeneratedVersion)
 {
@@ -252,15 +287,22 @@ loadSkirmishAILibrary(const char* const shortName, const char* const version)
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary() done");
 	return mySSkirmishAILibrary;
 }
-
+/**
+* Unloads the specified Skirmish AI.
+*
+* @return     0: ok
+*          != 0: error
+*/
 EXPORT(int) 
 unloadSkirmishAILibrary(const char* const shortName, const char* const version)
 {
 	simpleLog_log("unloadSkirmishAILibrary()");
-        releaseStatic();
 	return 0;
 }
-
+/**
+* @brief       unloads all AIs
+* Unloads all AI libraries currently loaded through this interface.
+*/
 EXPORT(int)
 unloadAllSkirmishAILibraries() {
 	simpleLog_log("unloadAllSkirmishAILibraries()");

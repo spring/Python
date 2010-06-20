@@ -117,8 +117,8 @@ bindPythonFunctions(void *hPython)
 	{% include os.path.join(templatedir,file) %}
 {% endfor %}
 
-static PyObject* wrapper;
-static const PyObject* sys_module;
+static PyObject* hWrapper;
+static const PyObject* hSysModule;
 
 /*add to search path and load module */
 PyObject *pythonLoadModule(const char *modul, const char* path)
@@ -127,7 +127,7 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 	PyObject *tmpname;
 	if (path!=NULL){
 		simpleLog_log("Including Python search path %s", path);
-		PyObject* pathlist = PyObject_GetAttrString((PyObject*)sys_module, "path");
+		PyObject* pathlist = PyObject_GetAttrString((PyObject*)hSysModule, "path");
 		PyList_Append(pathlist, PyString_FromString(path));
 	}
 	tmpname=PyString_FromString(modul);
@@ -144,18 +144,29 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 	Py_DECREF(tmpname);
 	return res;
 }
-
-
+/**
+* Through this function, the AI receives events from the engine.
+* For details about events that may arrive here, see file AISEvents.h.
+*
+* @param       teamId  the instance of the AI that the event is addressed to
+* @param       topic   unique identifyer of a message
+*                                      (see EVENT_* defines in AISEvents.h)
+* @param       data    an topic specific struct, which contains the data
+*                                      associatedwith the event
+*                                      (see S*Event structs in AISEvents.h)
+* @return     0: ok
+*          != 0: error
+*/
 int
 python_handleEvent(int teamId, int topic, const void* data)
 {
 	PyObject * pfunc;
 	PyObject * args;
-	if (wrapper==NULL){
+	if (hWrapper==NULL){
 	    //FIXME we should return -1 here but spring then doesn't allow an /aireload command
 	    return 0;
 	}
-	pfunc=PyObject_GetAttrString((PyObject*)wrapper,PYTHON_INTERFACE_HANDLE_EVENT);
+	pfunc=PyObject_GetAttrString((PyObject*)hWrapper,PYTHON_INTERFACE_HANDLE_EVENT);
 	if (!pfunc){
 		simpleLog_log("failed to extract function from module");
 	return -1;
@@ -170,7 +181,35 @@ python_handleEvent(int teamId, int topic, const void* data)
 	return 0;
 }
 
-/* Initialize the AI for team teamId */
+/**
+* This function is called, when an AI instance shall be created for teamId.
+* It is called before the first call to handleEvent() for teamId.
+*
+* A typical series of events (engine point of view, conceptual):
+* [code]
+* KAIK.init(1)
+* KAIK.handleEvent(EVENT_INIT, InitEvent(1))
+* RAI.init(2)
+* RAI.handleEvent(EVENT_INIT, InitEvent(2))
+* KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+* RAI.handleEvent(EVENT_UPDATE, UpdateEvent(0))
+* KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+* RAI.handleEvent(EVENT_UPDATE, UpdateEvent(1))
+* ...
+* [/code]
+*
+* This method exists only for performance reasons, which come into play on
+* OO languages. For non-OO language AIs, this method can be ignored,
+* because using only EVENT_INIT will cause no performance decrease.
+*
+* [optional]
+* An AI not exporting this function is still valid.
+*
+* @param       teamId        the teamId this library shall create an instance for
+* @param       callback      the callback for this Skirmish AI
+* @return     0: ok
+*          != 0: error
+*/
 int
 python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 {
@@ -192,7 +231,7 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 	if (!class)
 		return -1;
 	
-	PyObject* classlist = PyObject_GetAttrString((PyObject*)wrapper, "aiClasses");
+	PyObject* classlist = PyObject_GetAttrString((PyObject*)hWrapper, "aiClasses");
 	if (!classlist)
 		return -1;
 
@@ -203,8 +242,34 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 	}
 	return PyDict_SetItem(classlist, PyInt_FromLong(teamId), class);
 }
-
-/*release an ai*/
+/**
+* This function is called, when an AI instance shall be deleted.
+* It is called after the last call to handleEvent() for teamId.
+*
+* A typical series of events (engine point of view, conceptual):
+* [code]
+* ...
+* KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+* RAI.handleEvent(EVENT_UPDATE, UpdateEvent(654321))
+* KAIK.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+* RAI.handleEvent(EVENT_UPDATE, UpdateEvent(654322))
+* KAIK.handleEvent(EVENT_RELEASE, ReleaseEvent(1))
+* KAIK.release(1)
+* RAI.handleEvent(EVENT_RELEASE, ReleaseEvent(2))
+* RAI.release(2)
+* [/code]
+*
+* This method exists only for performance reasons, which come into play on
+* OO languages. For non-OO language AIs, this method can be ignored,
+* because using only EVENT_RELEASE will cause no performance decrease.
+*
+* [optional]
+* An AI not exporting this function is still valid.
+*
+* @param       teamId  the teamId the library shall release the instance of
+* @return     0: ok
+*          != 0: error
+*/
 int
 python_release(int teamId)
 {
@@ -223,11 +288,11 @@ int python_load(const struct SAIInterfaceCallback* callback,const int interfaceI
 	//Initalize Python
 	Py_Initialize();
 	simpleLog_log("Initialized python %s",Py_GetVersion());
-	sys_module=pythonLoadModule("sys", NULL);
-	if (!sys_module)
+	hSysModule=pythonLoadModule("sys", NULL);
+	if (!hSysModule)
 		return -1;
-	wrapper=pythonLoadModule(PYTHON_INTERFACE_MODULE_NAME,callback->DataDirs_getConfigDir(interfaceId));
-	if (!wrapper)
+	hWrapper=pythonLoadModule(PYTHON_INTERFACE_MODULE_NAME,callback->DataDirs_getConfigDir(interfaceId));
+	if (!hWrapper)
 		return -1;
 
 	return 0;
@@ -237,5 +302,8 @@ int python_load(const struct SAIInterfaceCallback* callback,const int interfaceI
  * Unload the Python Interpreter
  */
 void python_unload(void){
+	simpleLog_log("python_unload()");
 	Py_Finalize();
+	hWrapper=NULL;
+	hSysModule=NULL;
 }
