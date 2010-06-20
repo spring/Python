@@ -47,6 +47,7 @@ sharedLib_t hPython;
 #endif
 int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLevel){
 	const char* pythonNames [] = { 
+		"python3.1", "python31",
 		"python2.6", "python26",
 		"python2.5", "python25",
 		"python2.4", "python24",

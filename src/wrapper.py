@@ -32,7 +32,7 @@ def handleEvent(teamId, topic, data):
 		elif ais.has_key(teamId) and ais[teamId].has_key(topic):
 			useTeam(teamId)
 			ais[teamId][topic](data)
-	except Exception, e:
+	except:
 		traceback.print_exception(sys.exc_type, sys.exc_value,sys.exc_traceback)
 
 def useTeam(teamId):

@@ -39,6 +39,7 @@
 
 PyObject* PyAICallback_New(const struct SSkirmishAICallback* callback);
 
+
 // Python functions pointers
 void*  (*PYDICT_GETITEMSTRING)(void*, const char*)=NULL;
 void*  (*PY_BUILDVALUE)(char*, ...)=NULL;
@@ -62,30 +63,43 @@ const char* (*PY_GETVERSION)(void)=NULL;
 void   (*PY_INITIALIZE)(void)=NULL;
 PyObject *_PY_NONESTRUCT=NULL;
 
+
+void* findAddressEx(void *handle, const char *name){
+	void* res;
+	res=sharedLib_findAddress(handle, name);
+	if (res==NULL)
+		simpleLog_log("Unable to find adress for %s %p",name, handle);
+	return res;
+}
+
 void
 bindPythonFunctions(void *hPython)
 {
-	PYDICT_GETITEMSTRING=sharedLib_findAddress(hPython, "PyDict_GetItemString");
-	PY_BUILDVALUE=sharedLib_findAddress(hPython, "Py_BuildValue");
-	PYDICT_SETITEM=sharedLib_findAddress(hPython, "PyDict_SetItem");
-	PYERR_PRINT=sharedLib_findAddress(hPython, "PyErr_Print");
-	PYFLOAT_ASDOUBLE=sharedLib_findAddress(hPython, "PyFloat_AsDouble");
-	PYFLOAT_FROMDOUBLE=sharedLib_findAddress(hPython, "PyFloat_FromDouble");
-	PYIMPORT_IMPORT=sharedLib_findAddress(hPython, "PyImport_Import");
-	PYINT_FROMLONG=sharedLib_findAddress(hPython, "PyInt_FromLong");
-	PYLIST_APPEND=sharedLib_findAddress(hPython, "PyList_Append");
-	PYLIST_GETITEM=sharedLib_findAddress(hPython, "PyList_GetItem");
-	PYLIST_NEW=sharedLib_findAddress(hPython, "PyList_New");
-	PYLIST_SETITEM=sharedLib_findAddress(hPython, "PyList_SetItem");
-	PYOBJECT_CALLOBJECT=sharedLib_findAddress(hPython, "PyObject_CallObject");
-	PYOBJECT_GETATTRSTRING=sharedLib_findAddress(hPython, "PyObject_GetAttrString");
-	PYSTRING_FROMSTRING=sharedLib_findAddress(hPython, "PyString_FromString");
-	PYTUPLE_GETITEM=sharedLib_findAddress(hPython, "PyTuple_GetItem");
-	PYTYPE_READY=sharedLib_findAddress(hPython, "PyType_Ready");
-	PY_FINALIZE=sharedLib_findAddress(hPython, "Py_Finalize");
-	PY_GETVERSION=sharedLib_findAddress(hPython, "Py_GetVersion");
-	PY_INITIALIZE=sharedLib_findAddress(hPython, "Py_Initialize");
-	_PY_NONESTRUCT=sharedLib_findAddress(hPython, "_Py_NoneStruct");
+	PYDICT_GETITEMSTRING=findAddressEx(hPython, "PyDict_GetItemString");
+	PY_BUILDVALUE=findAddressEx(hPython, "Py_BuildValue");
+	PYDICT_SETITEM=findAddressEx(hPython, "PyDict_SetItem");
+	PYERR_PRINT=findAddressEx(hPython, "PyErr_Print");
+	PYFLOAT_ASDOUBLE=findAddressEx(hPython, "PyFloat_AsDouble");
+	PYFLOAT_FROMDOUBLE=findAddressEx(hPython, "PyFloat_FromDouble");
+	PYIMPORT_IMPORT=findAddressEx(hPython, "PyImport_Import");
+	PYINT_FROMLONG=findAddressEx(hPython, "PyLong_FromLong");
+	PYLIST_APPEND=findAddressEx(hPython, "PyList_Append");
+	PYLIST_GETITEM=findAddressEx(hPython, "PyList_GetItem");
+	PYLIST_NEW=findAddressEx(hPython, "PyList_New");
+	PYLIST_SETITEM=findAddressEx(hPython, "PyList_SetItem");
+	PYOBJECT_CALLOBJECT=findAddressEx(hPython, "PyObject_CallObject");
+	PYOBJECT_GETATTRSTRING=findAddressEx(hPython, "PyObject_GetAttrString");
+	PYSTRING_FROMSTRING=findAddressEx(hPython, "PyString_FromString");
+	PYTUPLE_GETITEM=findAddressEx(hPython, "PyTuple_GetItem");
+	PYTYPE_READY=findAddressEx(hPython, "PyType_Ready");
+	PY_FINALIZE=findAddressEx(hPython, "Py_Finalize");
+	PY_GETVERSION=findAddressEx(hPython, "Py_GetVersion");
+	PY_INITIALIZE=findAddressEx(hPython, "Py_Initialize");
+	_PY_NONESTRUCT=findAddressEx(hPython, "_Py_NoneStruct");
+
+	if (PYSTRING_FROMSTRING==NULL) //Python 3
+		PYSTRING_FROMSTRING=findAddressEx(hPython, "PyUnicode_InternFromString");
+
 }
 
 //Python functions

@@ -19,6 +19,6 @@
 #	@author Matthias Ableitner <spam@abma.de>
 #
 
-from interface  import *
-from team       import *
-from baseai     import *
+from PyAI.interface  import *
+from PyAI.team       import *
+from PyAI.baseai     import *

@@ -36,33 +36,33 @@ class NullPythonAI(BaseAI):
 		
 		self.units = {}
 	def eventUnitCreated(self, data):
-		print "Unit created (unit builder)", self.frame, data["unit"], data["builder"]
+		print("Unit created (unit builder)", self.frame, data["unit"], data["builder"])
 		self.units[data["unit"]]  = data["unit"] 
 
 	def eventRelease(self, data):
-		print "eventRelease"
+		print("eventRelease")
 
 	def eventInit(self,data):
-		print "eventInit", self.frame
+		print("eventInit", self.frame)
 		self.units = {}
-		print "Map width: ", Map.getWidth(), " Height: ", Map.getHeight()
+		print("Map width: ", Map.getWidth(), " Height: ", Map.getHeight())
 		
 	def cheatInit(self):
 		#Cheat start unit
-		print "cheatInit"
+		print("cheatInit")
 		if (len(self.units)>0): #only cheat when no units are avaiable
 			return
 		Cheats.setEnabled(True)
 		Command.giveMeNewUnitCheat(UnitDef.getUnitDefByName("armcom"), Map.getStartPos())
 		
-		print Resource.getCount()
+		print(Resource.getCount())
 		for i in xrange(Resource.getCount()):
-			print i, Resource.getName(i)
+			print(i, Resource.getName(i))
 			Command.giveMeResourceCheat(i,1000)
 
 	def eventUpdate(self,data):
 		if (self.frame == -1):
-			print "eventUpdate", data["frame"]
+			print("eventUpdate", data["frame"])
 			self.initFrame=data["frame"]+1
 		if (self.frame==self.initFrame): #process initCreate Events, then cheatInit
 			self.cheatInit()
