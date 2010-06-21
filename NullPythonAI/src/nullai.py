@@ -26,8 +26,9 @@ from PyAI import UnitDef, Map, Cheats, Resource, Command
 
 
 class NullPythonAI(BaseAI):
+	""" Example AI"""
 	def __init__(self, team, pyclb):
-		super(self.__class__, self).__init__(team, pyclb)
+		super(NullPythonAI, self).__init__(team, pyclb)
 		self.frame=-1
 		self.bindFunction(self.eventUnitCreated, PyAI.EVENT_UNIT_CREATED)
 		self.bindFunction(self.eventInit, PyAI.EVENT_INIT)
