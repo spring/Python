@@ -171,8 +171,7 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 * @return     0: ok
 *          != 0: error
 */
-int
-python_handleEvent(int teamId, int topic, const void* data)
+int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 {
 	PyObject * pfunc;
 	PyObject * args;
@@ -224,8 +223,7 @@ python_handleEvent(int teamId, int topic, const void* data)
 * @return     0: ok
 *          != 0: error
 */
-int
-python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
+int CALLING_CONV python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 {
 	simpleLog_log("python_init()");
 	const char* className = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
@@ -284,8 +282,7 @@ python_init(int teamId, const struct SSkirmishAICallback* aiCallback)
 * @return     0: ok
 *          != 0: error
 */
-int
-python_release(int teamId)
+int CALLING_CONV python_release(int teamId)
 {
 	//TODO: call python-release function
 	simpleLog_log("python_release()");
