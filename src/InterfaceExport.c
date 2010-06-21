@@ -35,36 +35,31 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 #define INTERFACE_PROPERTIES_FILE "interface.properties"
+#define PYTHON_DEFAULT_VERSION "python2.6"
 
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
 
 sharedLib_t hPython;
-#ifdef WIN32
-#define PATH_SEPERATOR "\\"
-#else
-#define PATH_SEPERATOR "/"
-#endif
-int loadPythonInterpreter(const char* logFileName, bool useTimeStamps, int logLevel){
-	const char* pythonNames [] = { 
-		"python3.1", "python31",
-		"python2.6", "python26",
-		"python2.5", "python25",
-		"python2.4", "python24",
-		NULL };
 
+int loadPythonInterpreter(const char *pythonVersion){
 	char filename[FILEPATH_MAXSIZE];
 	char logBuf[FILEPATH_MAXSIZE];
-	int i=0;
-	while((pythonNames[i]!=NULL)&&(hPython==NULL)){
-		//create platform independant libname (.dll, .so, ...)
-		sharedLib_createFullLibName(pythonNames[i],(char *)&filename,FILEPATH_MAXSIZE);
-		simpleLog_log("Trying to load %s",filename);
-		hPython=sharedLib_load(filename);
-		i++;
-	}
+	char tmpPythonName[FILEPATH_MAXSIZE];
+	strcpy(tmpPythonName,pythonVersion);
+#ifdef WIN32
+	//in linux the python lib is named pythonx.y, remove point
+	//while in windows it is named pythonxy
+	int len=strlen(tmpPythonName);
+	tmpPythonName[len-2]=pythonVersion[len-1];
+	tmpPythonName[len-1]=0;
+#endif
+	//create platform independant libname (.dll, .so, ...)
+	sharedLib_createFullLibName(pythonVersion,(char *)&filename,FILEPATH_MAXSIZE);
+	simpleLog_log("Trying to load %s",filename);
+	hPython=sharedLib_load(filename);
 	if (hPython == NULL){
-		snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading python_loader: %s, is python installed?",filename);
+		snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading %s: is python installed?",pythonVersion);
 		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
 		return 1;
 	}
@@ -109,6 +104,7 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 	static const int maxProps = 64;
 	const char* propKeys[maxProps];
 	char* propValues[maxProps];
+
 	int numProps = 0;
 
 	// ### read the interface config file (optional) ###
@@ -143,18 +139,16 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 		for (p=0; p < numProps; ++p) {
 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
 				"${home-dir}", ddw);
-// 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
-// 				"${home-dir}/", "");
 			free(propValues[p]);
 			propValues[p] = propValue_tmp;
 		}
 	}
-
 	// ### try to fetch the log-level from the properties ###
 	int logLevel = SIMPLELOG_LEVEL_FINEST;
 	const char* logLevel_str =
 		util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 		"log.level");
+
 	if (logLevel_str != NULL) {
 		int logLevel_tmp = atoi(logLevel_str);
 		if (logLevel_tmp >= SIMPLELOG_LEVEL_ERROR
@@ -213,11 +207,16 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 	simpleLog_log("Using read/write data-directory: %s",
 		callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using log file: %s", logFilePath);
-	simpleLog_log("Loading Python");
-	int res=loadPythonInterpreter(logFilePath, useTimeStamps, logLevel);
+	const char* pythonVersion_str =
+		util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
+		"python.version");
+	if (pythonVersion_str==NULL)
+		pythonVersion_str=PYTHON_DEFAULT_VERSION;
+	int res=loadPythonInterpreter(pythonVersion_str);
 	FREE(logFile);
 	return res;
 }
+
 /**
 * This function is called right right before the library is unloaded.
 * It can be used to deinitialize variables and to cleanup the environment,
