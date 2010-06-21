@@ -35,28 +35,48 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 #define INTERFACE_PROPERTIES_FILE "interface.properties"
-#define PYTHON_DEFAULT_VERSION "python2.6"
+#define PYTHON_LOAD_ORDER "python2.6 python2.5 python3.1 python2.4"
 
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
 
 sharedLib_t hPython;
 
+/*
+ *  try to load python versions specified in string
+ *  for example "python2.5 python2.6 python 3.1"
+ */
+
 int loadPythonInterpreter(const char *pythonVersion){
 	char filename[FILEPATH_MAXSIZE];
 	char logBuf[FILEPATH_MAXSIZE];
 	char tmpPythonName[FILEPATH_MAXSIZE];
-	strcpy(tmpPythonName,pythonVersion);
-#ifdef WIN32
-	//in windows the python lib is named pythonxy, remove the point
-	int len=strlen(tmpPythonName);
-	tmpPythonName[len-2]=pythonVersion[len-1];
-	tmpPythonName[len-1]=0;
-#endif
-	//create platform independant libname (.dll, .so, ...)
-	sharedLib_createFullLibName(pythonVersion,(char *)&filename,FILEPATH_MAXSIZE);
-	simpleLog_log("Trying to load %s",filename);
-	hPython=sharedLib_load(filename);
+	char *p;
+	int i;
+	int len=strlen(pythonVersion);
+	if (len<2){
+		callback->Log_exception(interfaceId,"python.version string has to be at least 3 chars long!",0,true);
+		return 1;
+	}
+	strncpy(tmpPythonName,pythonVersion, FILEPATH_MAXSIZE);
+	p=&tmpPythonName[0];
+	for(i=0; i<len; i++){//extract strings and try to load the python versions
+		if ((tmpPythonName[i]==' ') || (tmpPythonName[i]==0)){
+			tmpPythonName[i]=0;
+			#ifdef WIN32
+			//in windows the python lib is named pythonxy, remove the point
+			tmpPythonName[i-2]=pythonVersion[len-1];
+			tmpPythonName[i-1]=0;
+			#endif
+			//create platform independant libname (.dll, .so, ...)
+			sharedLib_createFullLibName(p,(char *)&filename,FILEPATH_MAXSIZE);
+			simpleLog_log("Trying to load %s",filename);
+			hPython=sharedLib_load(filename);
+			if (hPython!=NULL)
+				break;
+			*p=tmpPythonName[i+1]; //set start for next try
+		}
+	}
 	if (hPython == NULL){
 		snprintf(logBuf,FILEPATH_MAXSIZE,"Error loading %s: is python installed?",pythonVersion);
 		callback->Log_exception(interfaceId,(char*)&logBuf,0,true);
@@ -210,7 +230,7 @@ initStatic(int _interfaceId, const struct SAIInterfaceCallback* _callback)
 		util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 		"python.version");
 	if (pythonVersion_str==NULL)
-		pythonVersion_str=PYTHON_DEFAULT_VERSION;
+		pythonVersion_str=PYTHON_LOAD_ORDER;
 	int res=loadPythonInterpreter(pythonVersion_str);
 	FREE(logFile);
 	return res;
