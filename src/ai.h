@@ -25,9 +25,9 @@
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 
-int python_init(int teamId, const struct SSkirmishAICallback* aiCallback);
-int python_release(int teamId);
-int python_handleEvent(int teamId, int topic, const void* data);
+int CALLING_CONV python_init(int teamId, const struct SSkirmishAICallback* aiCallback);
+int CALLING_CONV python_release(int teamId);
+int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data);
 int python_load(const struct SAIInterfaceCallback* callback, int interfaceId);
 void python_unload(void);
 
