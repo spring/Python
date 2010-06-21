@@ -21,6 +21,7 @@
 
 class BaseAI(object):
 	def __init__(self, team, clb):
+		super(BaseAI, self).__init__()
 		self.team = team
 		self._ais = clb["ais"]
 	def bindFunction(self, function, event):
@@ -29,3 +30,5 @@ class BaseAI(object):
 		assert self._ais.has_key(self.team.teamId), "team not found"
 		assert isinstance(event, int), "wrong event type"
 		self._ais[self.team.teamId][event] = function
+	def __repr__(self):
+		return "<"+self.__class__.__name__ + " instance with team: " + repr(self.team) +">"
