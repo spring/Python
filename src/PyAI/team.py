@@ -25,7 +25,7 @@ class Team(object):
 		self.teamId=teamId
 		self.callback=callback
 	def __repr__(self):
-		return "<"+self.__class__.__name__ + "instance with teamId " + str(self.teamId) +">"
+		return "<"+self.__class__.__name__ + " instance with teamId " + str(self.teamId) +">"
 
 
 _currentTeam = None # current active Team

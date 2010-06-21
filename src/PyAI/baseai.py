@@ -31,4 +31,4 @@ class BaseAI(object):
 		assert isinstance(event, int), "wrong event type"
 		self._ais[self.team.teamId][event] = function
 	def __repr__(self):
-		return "<"+self.__class__.__name__ + "instance with team: " + repr(self.team) +">"
+		return "<"+self.__class__.__name__ + " instance with team: " + repr(self.team) +">"

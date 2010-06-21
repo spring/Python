@@ -30,12 +30,12 @@ class NullPythonAI(BaseAI):
 	def __init__(self, team, pyclb):
 		super(NullPythonAI, self).__init__(team, pyclb)
 		self.frame=-1
+		self.units = {}
 		self.bindFunction(self.eventUnitCreated, PyAI.EVENT_UNIT_CREATED)
 		self.bindFunction(self.eventInit, PyAI.EVENT_INIT)
 		self.bindFunction(self.eventUpdate, PyAI.EVENT_UPDATE)
 		self.bindFunction(self.eventRelease, PyAI.EVENT_RELEASE)
-		
-		self.units = {}
+
 	def eventUnitCreated(self, data):
 		print("Unit created (unit builder)", self.frame, data["unit"], data["builder"])
 		self.units[data["unit"]]  = data["unit"] 
