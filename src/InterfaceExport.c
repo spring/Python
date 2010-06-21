@@ -48,8 +48,7 @@ int loadPythonInterpreter(const char *pythonVersion){
 	char tmpPythonName[FILEPATH_MAXSIZE];
 	strcpy(tmpPythonName,pythonVersion);
 #ifdef WIN32
-	//in linux the python lib is named pythonx.y, remove point
-	//while in windows it is named pythonxy
+	//in windows the python lib is named pythonxy, remove the point
 	int len=strlen(tmpPythonName);
 	tmpPythonName[len-2]=pythonVersion[len-1];
 	tmpPythonName[len-1]=0;
