@@ -18,7 +18,8 @@
 	@author Andreas Löscher
 */
 
-#include <Python.h>
+#include <string.h>      // strcpy(), str...()
+#include <stdlib.h>      // malloc(), calloc(), free()
 
 #include "ai.h"
 #include "InterfaceExport.h"
