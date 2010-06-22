@@ -115,6 +115,7 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set(myInstAIDir   ${SKIRMISH_AI_LIBS}/${myNullPython}/${myVersion})
 	set(myGeneratedDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
 	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
+	set(engineHeadersDir "${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface")
 
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
@@ -146,6 +147,11 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		list (APPEND myGeneratedFilesSourceDir "builder/${FILE}")
 		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
 	ENDFOREACH(FILE)
+	set(myGenerateFiles
+			${myGeneratedFilesmyBuilderDir}
+			"${engineHeadersDir}/SSkirmishAICallback.h"
+			"${engineHeadersDir}/AISEvents.h"
+			"${engineHeadersDir}/AISCommands.h")
 
 	# Copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
@@ -166,7 +172,7 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		COMMENT " Generating Python Interface" VERBATIM
 		OUTPUT "${myGeneratedDir}/ai.c"
 		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
-		DEPENDS ${myGeneratedFilesmyBuilderDir}
+		DEPENDS ${myGenerateFiles}
 	)
 	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
