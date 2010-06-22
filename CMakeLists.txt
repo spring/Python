@@ -147,15 +147,15 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
 	ENDFOREACH(FILE)
 
-#copy python files to generated dir, because python <=2.5 creates .pyc
+	# Copy python files to generated dir, because python <=2.5 creates .pyc
 	add_custom_command(
-		COMMAND "cmake" ARGS "-E" "copy_directory" "builder" "${myBuilderDir}"
+		COMMAND "cmake" "-E" "copy_directory" "builder" "${myBuilderDir}"
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		COMMENT "copying builder/ files to ${myBuilderDir}"
 		DEPENDS ${myGeneratedFilesSourceDir}
 		OUTPUT ${myGeneratedFilesmyBuilderDir}
 	)
-#create the interface
+	# Create the interface
 	add_custom_command(
 		COMMAND ${PYTHON_EXECUTABLE}
 		"${myBuilderDir}/generator.py"
