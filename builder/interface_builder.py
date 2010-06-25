@@ -200,7 +200,7 @@ def buildclasses(funclist):
 				assertstring += cInd + "assert isinstance("+arg[0]+", float)\n"
 			elif "int" in arg[1]:
 				docstring += arg[1]
-				assertstring += cInd + "assert isinstance("+arg[0]+", int)\n"
+				assertstring += cInd + "assert isinstance("+arg[0]+", (int, long))\n"
 			elif "bool" in arg[1]:
 				docstring += arg[1]
 				assertstring += cInd + "assert isinstance("+arg[0]+", int)\n"
