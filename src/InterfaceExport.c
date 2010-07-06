@@ -36,7 +36,7 @@
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 #define INTERFACE_PROPERTIES_FILE "interface.properties"
-#define PYTHON_LOAD_ORDER "python2.6 python2.5 python3.1 python2.4"
+#define PYTHON_LOAD_ORDER "python2.6 python2.7 python2.5 python3.1 python2.4"
 
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
