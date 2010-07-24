@@ -45,7 +45,10 @@ def buildcall(funcname, args, rettype):
 			
 			if not "MAP" in funcname:
 				# get the listsize from the prelast parameter
-				prelude += varname+"=malloc(sizeof("+ptype+")*PyInt_AS_LONG(PyTuple_GetItem(args, "+str(last_index)+")));\n"
+				if ptype=="struct SAIFloat3*":
+					prelude += varname+"=malloc(sizeof("+ptype[:-1]+")*PyInt_AS_LONG(PyTuple_GetItem(args, "+str(last_index)+")));\n"
+				else:
+					prelude += varname+"=malloc(sizeof("+ptype+")*PyInt_AS_LONG(PyTuple_GetItem(args, "+str(last_index)+")));\n"
 			else:
 				# MAP functions use another function for the list size and you cannot specify the max listlength
 				# as parameter
