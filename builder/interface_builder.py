@@ -183,7 +183,7 @@ def buildclasses(funclist):
 		docu=False
 		for arg in args[1:]:
 			docu=True
-			if "[]" in arg[0]:
+			if "[]" in arg[0]  or "struct SAIFloat3*"==arg[1]:
 				break
 			docstring += "\t" + arg[0]+": "
 			if "SAIFloat3" in arg[1]:
