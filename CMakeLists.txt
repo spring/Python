@@ -104,11 +104,9 @@ endif (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 # Build
 if    (BUILD_PYTHON_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget      "${myName}-AIInterface")
 
 	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 	set(myTarget      "${myName}-AIInterface")
-	set(myLoader      "${myName}-Loader")
 	set(myNullPython  "NullPythonAI")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
 	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
