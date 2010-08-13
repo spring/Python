@@ -26,8 +26,8 @@
 #include "ai.h"
 
 
-#include "CUtils/SimpleLog.h"
-#include "CUtils/SharedLibrary.h"
+#include "lib/cutils/SimpleLog.h"
+#include "lib/cutils/SharedLibrary.h"
 
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SAIFloat3.h"

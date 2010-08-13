@@ -26,9 +26,9 @@
 
 
 #include "InterfaceDefines.h"
-#include "CUtils/Util.h"
-#include "CUtils/SimpleLog.h"
-#include "CUtils/SharedLibrary.h"
+#include "lib/cutils/Util.h"
+#include "lib/cutils/SimpleLog.h"
+#include "lib/cutils/SharedLibrary.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
