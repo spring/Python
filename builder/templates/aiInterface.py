@@ -39,3 +39,11 @@ class Command(object):
 {% for function in commands %}
 {{commands[function]}}
 {% endfor %}
+
+
+# hard coded variables
+UNIT_COMMAND_OPTION_DONT_REPEAT       = (1 << 3)
+UNIT_COMMAND_OPTION_RIGHT_MOUSE_KEY   = (1 << 4)
+UNIT_COMMAND_OPTION_SHIFT_KEY         = (1 << 5)
+UNIT_COMMAND_OPTION_CONTROL_KEY       = (1 << 6)
+UNIT_COMMAND_OPTION_ALT_KEY           = (1 << 7)
