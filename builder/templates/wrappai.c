@@ -143,21 +143,21 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 		simpleLog_log("Including Python search path %s", path);
 		PyObject* pathlist = PyObject_GetAttrString((PyObject*)hSysModule, "path");
 		PyList_Append(pathlist, PyString_FromString(path));
-		Py_DECREF(pathlist);
+		Py_XDECREF(pathlist);
 	}
 	tmpname=PyString_FromString(modul);
 	res=PyImport_Import(tmpname);
 	if (!res){
 		simpleLog_log("Could not load python module %s\"%s\"",path,modul);
 		PyErr_Print();
-		Py_DECREF(tmpname);
+		Py_XDECREF(tmpname);
 		return res;
 	}
 	if (path==NULL)
 		simpleLog_log("Loaded Python Module %s in default search path",modul);
 	else
 		simpleLog_log("Loaded Python Module %s in %s",modul, path);
-	Py_DECREF(tmpname);
+	Py_XDECREF(tmpname);
 	return res;
 }
 /**
@@ -190,15 +190,15 @@ int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 	  }
 	  event = event_convert(topic,(void*)data);
 	  args = Py_BuildValue("(iiO)",teamId, topic, event);
-	  Py_DECREF(event);
-	  if (!args){
+	  Py_XDECREF(event);
+	  if (args){
+	    PyObject_CallObject(pfunc, args);
+	    retValue = 0 ;
+	  } else {
 	    simpleLog_log("failed to build args");
-	    Py_DECREF(pfunc);
 	  }
-	  PyObject_CallObject(pfunc, args);
-	  Py_DECREF(pfunc);
-	  Py_DECREF(args);
-	  retValue = 0 ;
+	  Py_XDECREF(pfunc);
+	  Py_XDECREF(args);
 	}
 
 	return retValue;
@@ -245,32 +245,36 @@ int CALLING_CONV python_init(int teamId, const struct SSkirmishAICallback* aiCal
 
 	const char* aipath = aiCallback->Clb_DataDirs_getConfigDir(teamId);
 	PyObject* aimodule = pythonLoadModule(modName, aipath);	
-	if (!aimodule)
-		return -1;
+	if (!aimodule) {
+	  return -1;
+	}
 
 	
 	PyObject* class = PyObject_GetAttrString(aimodule, className);
+	Py_XDECREF(aimodule);
 	if (!class) {
-	  Py_DECREF(aimodule);
 	  return -1;
 	}
 	
 	PyObject* classlist = PyObject_GetAttrString((PyObject*)hWrapper, "aiClasses");
 	if (!classlist) {
-	  Py_DECREF(aimodule);
 	  Py_DECREF(class);
 	  return -1;
 	}
 
 	if (PyType_Ready(&PyAICallback_Type) < 0){
-	  Py_DECREF(aimodule);
 	  Py_DECREF(class);
 	  Py_DECREF(classlist);
 	  simpleLog_log("Error PyType_Ready()");
 	  PyErr_Print();
 	  return -1;
 	}
-	return PyDict_SetItem(classlist, PyInt_FromLong(teamId), class);
+
+	int retValue = PyDict_SetItem(classlist, PyInt_FromLong(teamId), class);
+	Py_DECREF(class);
+	Py_DECREF(classlist);
+
+	return retValue ;
 }
 /**
 * This function is called, when an AI instance shall be deleted.
@@ -332,13 +336,9 @@ int python_load(const struct SAIInterfaceCallback* callback,const int interfaceI
  */
 void python_unload(void){
 	simpleLog_log("python_unload()");
-	if( hWrapper ) {
-	  Py_DECREF(hWrapper);
-	  hWrapper=NULL;
-	}
-	if( hSysModule ) {
-	  Py_DECREF(hSysModule);
-	  hSysModule=NULL;
-	}
+	Py_XDECREF(hWrapper);
+	hWrapper=NULL;
+	Py_XDECREF(hSysModule);
+	hSysModule=NULL;
 	Py_Finalize();
 }
