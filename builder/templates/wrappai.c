@@ -143,12 +143,14 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 		simpleLog_log("Including Python search path %s", path);
 		PyObject* pathlist = PyObject_GetAttrString((PyObject*)hSysModule, "path");
 		PyList_Append(pathlist, PyString_FromString(path));
+		Py_DECREF(pathlist);
 	}
 	tmpname=PyString_FromString(modul);
 	res=PyImport_Import(tmpname);
 	if (!res){
 		simpleLog_log("Could not load python module %s\"%s\"",path,modul);
 		PyErr_Print();
+		Py_DECREF(tmpname);
 		return res;
 	}
 	if (path==NULL)
@@ -173,25 +175,33 @@ PyObject *pythonLoadModule(const char *modul, const char* path)
 */
 int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 {
-	PyObject * pfunc;
 	PyObject * args;
+	PyObject * event;
+	PyObject * pfunc;
+        int retValue = -1;
+
 	if (hWrapper==NULL){
 	    //FIXME we should return -1 here but spring then doesn't allow an /aireload command
-	    return 0;
-	}
-	pfunc=PyObject_GetAttrString((PyObject*)hWrapper,PYTHON_INTERFACE_HANDLE_EVENT);
-	if (!pfunc){
-		simpleLog_log("failed to extract function from module");
-	return -1;
-	}
-	args = Py_BuildValue("(iiO)",teamId, topic, event_convert(topic,(void*)data));
-	if (!args){
+	    retValue = 0 ;
+	} else {
+	  pfunc=PyObject_GetAttrString((PyObject*)hWrapper,PYTHON_INTERFACE_HANDLE_EVENT);
+	  if (!pfunc){
+	    simpleLog_log("failed to extract function from module");
+	  }
+	  event = event_convert(topic,(void*)data);
+	  args = Py_BuildValue("(iiO)",teamId, topic, event);
+	  Py_DECREF(event);
+	  if (!args){
 	    simpleLog_log("failed to build args");
-	    return -1;
+	    Py_DECREF(pfunc);
+	  }
+	  PyObject_CallObject(pfunc, args);
+	  Py_DECREF(pfunc);
+	  Py_DECREF(args);
+	  retValue = 0 ;
 	}
-	PyObject_CallObject(pfunc, args);
-	Py_DECREF(pfunc);
-	return 0;
+
+	return retValue;
 }
 
 /**
@@ -240,17 +250,25 @@ int CALLING_CONV python_init(int teamId, const struct SSkirmishAICallback* aiCal
 
 	
 	PyObject* class = PyObject_GetAttrString(aimodule, className);
-	if (!class)
-		return -1;
+	if (!class) {
+	  Py_DECREF(aimodule);
+	  return -1;
+	}
 	
 	PyObject* classlist = PyObject_GetAttrString((PyObject*)hWrapper, "aiClasses");
-	if (!classlist)
-		return -1;
+	if (!classlist) {
+	  Py_DECREF(aimodule);
+	  Py_DECREF(class);
+	  return -1;
+	}
 
 	if (PyType_Ready(&PyAICallback_Type) < 0){
-		simpleLog_log("Error PyType_Ready()");
-		PyErr_Print();
-		return -1;
+	  Py_DECREF(aimodule);
+	  Py_DECREF(class);
+	  Py_DECREF(classlist);
+	  simpleLog_log("Error PyType_Ready()");
+	  PyErr_Print();
+	  return -1;
 	}
 	return PyDict_SetItem(classlist, PyInt_FromLong(teamId), class);
 }
@@ -314,7 +332,13 @@ int python_load(const struct SAIInterfaceCallback* callback,const int interfaceI
  */
 void python_unload(void){
 	simpleLog_log("python_unload()");
+	if( hWrapper ) {
+	  Py_DECREF(hWrapper);
+	  hWrapper=NULL;
+	}
+	if( hSysModule ) {
+	  Py_DECREF(hSysModule);
+	  hSysModule=NULL;
+	}
 	Py_Finalize();
-	hWrapper=NULL;
-	hSysModule=NULL;
 }
