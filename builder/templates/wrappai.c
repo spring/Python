@@ -132,7 +132,7 @@ bindPythonFunctions(void *hPython)
 {% endfor %}
 
 static PyObject* hWrapper;
-static const PyObject* hSysModule;
+static PyObject* hSysModule;
 
 /*add to search path and load module */
 PyObject *pythonLoadModule(const char *modul, const char* path)
