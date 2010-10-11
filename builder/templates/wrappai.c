@@ -180,10 +180,7 @@ int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 	PyObject * pfunc;
         int retValue = -1;
 
-	if (hWrapper==NULL){
-	    //FIXME we should return -1 here but spring then doesn't allow an /aireload command
-	    retValue = 0 ;
-	} else {
+	if( hWrapper ) {
 	  pfunc=PyObject_GetAttrString((PyObject*)hWrapper,PYTHON_INTERFACE_HANDLE_EVENT);
 	  if (!pfunc){
 	    simpleLog_log("failed to extract function from module");
@@ -199,6 +196,9 @@ int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 	  }
 	  Py_XDECREF(pfunc);
 	  Py_XDECREF(args);
+	} else {
+	  //FIXME we should return -1 here but spring then doesn't allow an /aireload command
+	  retValue = 0 ;
 	}
 
 	return retValue;
