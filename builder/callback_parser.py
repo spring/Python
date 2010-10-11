@@ -61,6 +61,7 @@ def buildcall(funcname, args, rettype):
 					i = funcname.find("VALS")
 				sizefuncname = funcname[:i]+"SIZE"+funcname[i+4:]
 				sizefunccall = "callback->"+sizefuncname+"("
+
 				# now the parameters, if we are at the list, take all other parameters befor"
 				i = call.rfind(funcname) + len(funcname) + 1
 				params = call[i:]
@@ -69,7 +70,13 @@ def buildcall(funcname, args, rettype):
 				sizefunccall += params
 				sizefunccall += "\t)"
 				size="size"
-				prelude += "\tint size = "+sizefunccall+";\n\t"+varname+"=malloc(sizeof("+ptype+")*size);\n\t"
+
+				# Find proper location to insert prelude into existing prelude
+				i = call.find( "Py_BEGIN_ALLOW_THREADS" )
+				prelude = call[:i] + prelude
+				prelude += "\tint size = "+sizefunccall+";\n"
+				prelude += varname+"=malloc(sizeof("+ptype+")*size);\n\n"
+				call = call[i:]
 			call = prelude + call + varname + ","
 			reverse = (ptype, varname, size)
 
