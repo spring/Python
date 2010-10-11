@@ -25,24 +25,28 @@ def buildcall(funcname, args, rettype):
 	reverse = False
 	call = ""
 	if rettype=="void":
+		call += "Py_BEGIN_ALLOW_THREADS\n"
 		call +="callback->"
 	else:
 		call += rettype + " retval;\n"
+		call += "Py_BEGIN_ALLOW_THREADS\n"
 		call += "retval = callback->"
+
 	call += funcname+"("
 	for index, (pname, ptype) in enumerate(args):
 		call += "\n\t"
+		varname = "arg"+str(index)
 		if "[]" in pname or ptype=="struct SAIFloat3*":
 			size = 1
 			# need a list
 			# listsize is in last parameter
 			last_index=len(args)-1
-			varname = "extra"+str(index)
 			if ptype=="struct SAIFloat3*":
-				prelude = ptype+" "+varname+";\n"
+				prelude = ptype+" "
 			else:
-				prelude = ptype+"* "+varname+";\n"
-			
+				prelude = ptype+"* "
+			prelude+=varname+";\n"	
+		
 			if not "MAP" in funcname:
 				# get the listsize from the prelast parameter
 				if ptype=="struct SAIFloat3*":
@@ -68,29 +72,57 @@ def buildcall(funcname, args, rettype):
 				prelude += "\tint size = "+sizefunccall+";\n\t"+varname+"=malloc(sizeof("+ptype+")*size);\n\t"
 			call = prelude + call + varname + ","
 			reverse = (ptype, varname, size)
+
 		elif ptype=="int*":
-			call += "build_intarray(PyTuple_GetItem(args, "+str(index)+")),"
+			prelude = ptype + " " + varname + "="
+			prelude += "build_intarray(PyTuple_GetItem(args, "+str(index)+"));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ptype=="int":
-			call += "PyInt_AS_LONG(PyTuple_GetItem(args, "+str(index)+")),"
+			prelude = ptype + " " + varname + "="
+			prelude += "PyInt_AS_LONG(PyTuple_GetItem(args, "+str(index)+"));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ptype=="const char* const" or ptype=="const char*":
-			call += "PyString_AS_STRING(PyTuple_GetItem(args, "+str(index)+")),"
+			prelude = ptype + " " + varname + "="
+			prelude += "PyString_AS_STRING(PyTuple_GetItem(args, "+str(index)+"));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ptype=="bool":
-			call += "(bool)PyInt_AS_LONG(PyTuple_GetItem(args,"+str(index)+")),"
+			prelude = ptype + " " + varname + "="
+			prelude += "(bool)PyInt_AS_LONG(PyTuple_GetItem(args,"+str(index)+"));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ptype=="struct SAIFloat3":
-			call += "*(build_SAIFloat3(PyTuple_GetItem(args,"+str(index)+"))),"
+			prelude = ptype + " " + varname + "="
+			prelude += "*(build_SAIFloat3(PyTuple_GetItem(args,"+str(index)+")));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ptype=="float":
-			call += "PyFloat_AsDouble(PyTuple_GetItem(args, "+str(index)+")),"
+			prelude = ptype + " " + varname + "="
+			prelude += "PyFloat_AsDouble(PyTuple_GetItem(args, "+str(index)+"));\n"
+			call += varname + ","
+			call = prelude + call
+
 		elif ("void*") in ptype and ("commandData" in pname):
+
 			prelude = "void* commandData="
 			prelude += "command_convert((int)PyInt_AS_LONG(PyTuple_GetItem(args, "+str(index-1)+")), PyTuple_GetItem(args, "+str(index)+"));\n"
 			call += "commandData,"
 			call = prelude + call
 			reverse = ("void","command_reverse((int)PyInt_AS_LONG(PyTuple_GetItem(args, "+str(index-1)+")),commandData)",1)
+
 		else:
 			call += "NULL,"
-
+		
 	first ="const struct SSkirmishAICallback* callback = ((PyAICallbackObject*)ob)->callback;\n"
 	call=first + call[:-1]+");\n"
+	call += "Py_END_ALLOW_THREADS\n"
 	return call, reverse
 		
 
