@@ -19,11 +19,11 @@ teams     = {}	# {teamId : team }
 
 def handleEvent(teamId, topic, data):
 	try:
-		useTeam(teamId)
 		if topic == PyAI.EVENT_INIT:
 			team = Team(teamId, data["callback"])
 			teams[teamId] = team
 			if aiClasses.has_key(teamId):
+				useTeam(teamId)
 				ais[teamId]={}
 				aiClasses[teamId](team, {"ais":ais})
 
@@ -31,6 +31,7 @@ def handleEvent(teamId, topic, data):
 				return -1
 
 		if ais.has_key(teamId) and ais[teamId].has_key(topic):
+			useTeam(teamId)
 			ais[teamId][topic](data)
 
 	except:
