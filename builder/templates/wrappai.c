@@ -61,6 +61,9 @@ int    (*PYTYPE_READY)(void*)=NULL;
 void   (*PY_FINALIZE)(void)=NULL;
 const char* (*PY_GETVERSION)(void)=NULL;
 void   (*PY_INITIALIZE)(void)=NULL;
+void   (*PYEVAL_INITTHREADS)(void)=NULL;
+PyGILState_STATE (*PYGILSTATE_ENSURE)(void)=NULL;
+void   (*PYGILSTATE_RELEASE)(PyGILState_STATE);
 PyObject *_PY_NONESTRUCT=NULL;
 
 
@@ -95,6 +98,9 @@ bindPythonFunctions(void *hPython)
 	PY_FINALIZE=findAddressEx(hPython, "Py_Finalize");
 	PY_GETVERSION=findAddressEx(hPython, "Py_GetVersion");
 	PY_INITIALIZE=findAddressEx(hPython, "Py_Initialize");
+	PYEVAL_INITTHREADS=findAddressEx(hPython, "PyEval_InitThreads");
+	PYGILSTATE_ENSURE=findAddressEx(hPython, "PyGILState_Ensure");
+	PYGILSTATE_RELEASE=findAddressEx(hPython, "PyGILState_Release");
 	_PY_NONESTRUCT=findAddressEx(hPython, "_Py_NoneStruct");
 
 	if (PYSTRING_FROMSTRING==NULL) //Python 3
@@ -123,6 +129,9 @@ bindPythonFunctions(void *hPython)
 #define Py_Finalize            PY_FINALIZE
 #define Py_GetVersion          PY_GETVERSION
 #define Py_Initialize          PY_INITIALIZE
+#define PyEval_InitThreads     PYEVAL_INITTHREADS
+#define PyGILState_Ensure      PYGILSTATE_ENSURE
+#define PyGILState_Release     PYGILSTATE_RELEASE
 #undef Py_None
 #define Py_None		       _PY_NONESTRUCT
 
@@ -180,10 +189,7 @@ int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 	PyObject * pfunc;
         int retValue = -1;
 
-	if (hWrapper==NULL){
-	    //FIXME we should return -1 here but spring then doesn't allow an /aireload command
-	    retValue = 0 ;
-	} else {
+	if( hWrapper ) {
 	  pfunc=PyObject_GetAttrString((PyObject*)hWrapper,PYTHON_INTERFACE_HANDLE_EVENT);
 	  if (!pfunc){
 	    simpleLog_log("failed to extract function from module");
@@ -199,6 +205,9 @@ int CALLING_CONV python_handleEvent(int teamId, int topic, const void* data)
 	  }
 	  Py_XDECREF(pfunc);
 	  Py_XDECREF(args);
+	} else {
+	  //FIXME we should return -1 here but spring then doesn't allow an /aireload command
+	  retValue = 0 ;
 	}
 
 	return retValue;
@@ -321,6 +330,7 @@ int python_load(const struct SAIInterfaceCallback* callback,const int interfaceI
 	//Initalize Python
 	Py_Initialize();
 	simpleLog_log("Initialized python %s",Py_GetVersion());
+	PyEval_InitThreads() ;
 	hSysModule=pythonLoadModule("sys", NULL);
 	if (!hSysModule)
 		return -1;
