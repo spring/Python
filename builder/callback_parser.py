@@ -22,14 +22,16 @@
 from helper import normstring, joinstrings
 
 def buildcall(funcname, args, rettype):
+	BEGIN_THREADS="PyGILState_STATE state = PyGILState_Ensure();\n"
+	END_THREADS="PyGILState_Release(state);\n"
 	reverse = False
 	call = ""
 	if rettype=="void":
-		call += "Py_BEGIN_ALLOW_THREADS\n"
+		call += BEGIN_THREADS
 		call +="callback->"
 	else:
 		call += rettype + " retval;\n"
-		call += "Py_BEGIN_ALLOW_THREADS\n"
+		call += BEGIN_THREADS
 		call += "retval = callback->"
 
 	call += funcname+"("
@@ -72,7 +74,7 @@ def buildcall(funcname, args, rettype):
 				size="size"
 
 				# Find proper location to insert prelude into existing prelude
-				i = call.find( "Py_BEGIN_ALLOW_THREADS" )
+				i = call.find( BEGIN_THREADS )
 				prelude = call[:i] + prelude
 				prelude += "\tint size = "+sizefunccall+";\n"
 				prelude += varname+"=malloc(sizeof("+ptype+")*size);\n\n"
@@ -129,7 +131,7 @@ def buildcall(funcname, args, rettype):
 		
 	first ="const struct SSkirmishAICallback* callback = ((PyAICallbackObject*)ob)->callback;\n"
 	call=first + call[:-1]+");\n"
-	call += "Py_END_ALLOW_THREADS\n"
+	call += END_THREADS
 	return call, reverse
 		
 
