@@ -143,6 +143,7 @@ def getcallback_functions(filename):
 
 	ouput = re.findall(regex.CALLBACK_FUNCTIONS, stream)
 
+	output = re.findall(regex.CALLBACK_FUNCTIONS, stream)
 	functionData = {}
 	functionCalls = {}
 
@@ -161,3 +162,4 @@ def getcallback_functions(filename):
 		functionData[functionName]  = (functionName, argumentList, retType)
 
 	return functionCalls, functionData
+
