@@ -20,6 +20,7 @@
 #
 
 from helper import normstring, joinstrings
+import regex, re
 
 def buildcall(funcname, args, rettype):
 	BEGIN_THREADS="PyGILState_STATE state = PyGILState_Ensure();\n"
@@ -138,138 +139,25 @@ def buildcall(funcname, args, rettype):
 def getcallback_functions(filename):
 	f=open(filename, "r")
 
-	line = ""         # line to be processed
-	skipnext=False    # are we in an unfinished multiline comment?
-	retval= {}        # return value
-	plainlist = {}
+	stream = f.read()
 
-	for actline in f.readlines():
-		# ignore exter "c"{
-		if 'extern "C"' in actline:
-			continue
+	ouput = re.findall(regex.CALLBACK_FUNCTIONS, stream)
 
-		# ignore lines starting with defines
-		if ("#" in actline):
-			continue
-		
-		# skip /* */ comments
-		cont=False # continue after while loop?
-		while (1): # for cases where "/* com */ /* com */"in one line
-			if not skipnext and "/*" in actline:
-				skipnext=True
-				cont=True
-			if skipnext and "*/" in actline:
-				skipnext=False
-				i = actline.find("*/")
-				actline=actline[(i+2):]
-			if skipnext:
-				cont=True
-				break
-			break
-		if cont:
-			cont=False
-			continue
-		
-		# remove // comments
-		if "//" in actline:
-			i = actline.find("//")
-			actline = actline[:i]
+	functionData = {}
+	functionCalls = {}
 
-		# ignore struct define line
-		if ("struct" in actline) and ("SSkirmishAICallback" in actline):
-			continue
+	for retType, functionName, arguments in output:
+		# build a list of tuples from the arguments string
+		# [(name, type), (name, type), ...]
+		argumentList = arguments.split(",")
+		retType = retType.strip()
+		for i, argument in enumerate(argumentList):
+			argType, argName = argument.strip().rsplit(" ", 1)
+			argumentList[i] = (argType, argName)
 
-		# join lines to one statement (in this case function definition in struct)
-		if actline.find(";")>0:
-			line+=actline
-		else:
-			line = line[:-1] if line.endswith("\n") else line
-			line = line+actline
-			continue
-		
-		# split lines on CALLING_CONV
-		# first thing before CALLING_CONV is return type
-		i=line.find("(CALLING_CONV")
-		rettype = line[:i].strip()
-		
-		# first thing after CALLING_CONV is function name
-		remains = line[(i+len("(CALLING_CONV")):]
-		i=remains.find("(")
-		funcname = remains[:i].strip()[1:-1]
-		
-		# the stuff in the brakets after the function name are the
-		# arguments with types
-		remains = remains[i+1:]
-		remains = normstring(remains[:remains.find(")")])
-		args = remains.split(",")
-		arglist = []
+		call = buildcall(functionName, argumentList, retType)
 
-		for arg in args:
-			aa=arg.strip().split(" ")
-			key = aa[-1]
-			value = joinstrings(aa[:-1])
-			#if "[]" in key:
-				#key=key.replace("[]", " ")
-				#value+="*"
-			arglist.append((key, value))
-		
-		plainlist[funcname]=(retval, arglist)
-		
-		call, reverse = buildcall(funcname, arglist, rettype)
-		
-		if not reverse:
-			retbuild = ""
-			if "int" in rettype:
-				retbuild = "Py_BuildValue(\"i\", retval)"
-			elif "char" in rettype:
-				retbuild = "Py_BuildValue(\"s\", retval)"
-			elif "float" in rettype:
-				retbuild = "Py_BuildValue(\"f\", retval)"
-			elif "bool" in rettype:
-				retbuild = "Py_BuildValue(\"i\", (int)retval)"
-			elif "SAIFloat3" in rettype:
-				retbuild = "Py_BuildValue(\"O\", convert_SAIFloat3(&retval))"
-			else:
-				retbuild = "Py_None"
-			call +="return "+retbuild+";"
-		else:
-			ptype, pname, size = reverse
-			if "command_reverse" in pname:
-				# special case: command struct my return a value
-				call += "PyObject *pyreturn="+pname+";\n"
-				call += "FREE(commandData);\n"
-				call += "return pyreturn;"
-			else:
-				# an array was filled and the amount of data is given in the return value
-				# in this case do not give back the size of the array but convert everything into
-				# alist and return the list
-				if not "MAP" in funcname:
-					listsize = "retval"
-				else:
-					listsize = str(size)
-					
-				if ptype=="float":
-					builditem="PyFloat_FromDouble("
-				elif ptype=="int" or ptype=="unsigned short" or ptype=="unsigned char":
-					builditem="PyInt_FromLong("
-				elif ptype=="const char*":
-					builditem="PyString_FromString("
-				elif ptype=="struct SAIFloat3*":
-					builditem="convert_SAIFloat3(&"
-				else:
-					raw_input("error: "+ptype+call)
+		functionCalls[functionName] = call
+		functionData[functionName]  = (functionName, argumentList, retType)
 
-				prelude = "PyObject* list;\nint i;\n"
-				postlude = "list = PyList_New("+listsize+");\n"
-				postlude += "for (i=0;i<"+listsize+";i++) PyList_SetItem(list, i, "+builditem+pname+"[i]));\n"
-				postlude += "FREE("+pname+");\n"
-				postlude += "return list;"
-				call = prelude + call + postlude
-
-		if funcname:
-			retval[funcname]=call
-		
-		# reset line
-		line=""
-	return retval, plainlist
-
+	return functionCalls, functionData
