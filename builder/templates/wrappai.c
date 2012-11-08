@@ -30,7 +30,6 @@
 #include "CUtils/SharedLibrary.h"
 
 #include "ExternalAI/Interface/AISCommands.h"
-#include "ExternalAI/Interface/SAIFloat3.h"
 #include "ExternalAI/Interface/AISEvents.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 
