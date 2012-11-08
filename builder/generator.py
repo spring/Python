@@ -22,8 +22,8 @@
 import sys
 import os
 
-from callback_parser import getcallback_functions
-from event_parser import getevents, getcommands, parse_enums
+import callback_parser
+import event_parser
 from interface_builder import buildclasses, commandfuncs
 
 from helper import converter
@@ -31,34 +31,36 @@ from helper import converter
 from template import Template
 
 
-PATH = os.path.join("ExternalAI","Interface")
 
-CALLBACKFILE = os.path.join(PATH,"SSkirmishAICallback.h")
-EVENTFILE = os.path.join(PATH,"AISEvents.h")
-COMMANDFILE = os.path.join(PATH, "AISCommands.h")
+def makeabspath(prefix, headerfile):
+	return os.path.join(prefix, "ExternalAI","Interface", headerfile)
+
+CALLBACKFILE = "SSkirmishAICallback.h"
+EVENTFILE = "AISEvents.h"
+COMMANDFILE = "AISCommands.h"
 
 TEMPLATEDIR = None
 
 class Generator(object):
   def __init__(self, templatedir, springdir, outputdir, options=()):
-    self.templatedir=templatedir
-    self.springdir=springdir
-    self.outputdir=outputdir
-    
-    files = [CALLBACKFILE, EVENTFILE, COMMANDFILE]
-    for i, f in enumerate(files):
-      files[i]=os.path.join(springdir,f)
+	self.templatedir=templatedir
+	self.springdir=springdir
+	self.outputdir=outputdir
+	global CALLBACKFILE, EVENTFILE, COMMANDFILE
+	CALLBACKFILE = makeabspath(springdir, CALLBACKFILE)
+	EVENTFILE = makeabspath(springdir, EVENTFILE)
+	COMMANDFILE = makeabspath(springdir, COMMANDFILE)
 
-    self.clbfuncs, plainfuncs = getcallback_functions(files[0])
-    self.classes= buildclasses(plainfuncs)
-    self.events = getevents(files[1])
-    self.commands = getcommands(files[2])
-    self.command_types = parse_enums(files[2])
-    self.event_types = parse_enums(files[1])
-    self.commandfuncs = commandfuncs(self.commands)
-    
-    
-    self.options = set(options)
+	self.clbfuncs, plainfuncs = callback_parser.getcallback_functions(CALLBACKFILE)
+	self.classes= buildclasses(plainfuncs)
+	self.events = event_parser.getevents(EVENTFILE)
+	self.commands = event_parser.getcommands(COMMANDFILE)
+	self.command_types = event_parser.parse_enums(COMMANDFILE)
+	self.event_types = event_parser.parse_enums(EVENTFILE)
+	self.commandfuncs = commandfuncs(self.commands)
+
+
+	self.options = set(options)
     
   def render(self):
     # render wrapper for handleEvent and callback functions
@@ -107,3 +109,4 @@ if __name__=='__main__':
   print "Generating Sources..."
   Generator(templatedir,springdir,outputdir).render()
   print "done"
+
