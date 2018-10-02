@@ -1,4 +1,4 @@
 ### Generic Python Skirmish AI config
 #
 
-ConfigurePythonSkirmishAI()
+configure_python_skirmish_ai()

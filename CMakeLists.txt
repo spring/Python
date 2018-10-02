@@ -34,9 +34,9 @@
 
 # Native Skirmish AI configuration macro
 # This will be called from native AIs at AI/Skirmish/*/CMakeLists.txt.
-macro    (ConfigurePythonSkirmishAI)
+macro    (configure_python_skirmish_ai)
 	set(myDir                  "${CMAKE_CURRENT_SOURCE_DIR}")
-	GetLastPathPart(dirName ${myDir})
+	get_last_path_part(dirName ${myDir})
 	set(myName                 "${dirName}")
 	set(mySourceDirRel         "${${mySourceDirRel_var}}") # Common values are "" or "src"
 	set(additionalSources      ${${additionalSources_var}})
@@ -54,20 +54,20 @@ macro    (ConfigurePythonSkirmishAI)
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
 		# Assemble meta data
-		GetVersionFromFile(myVersion "${myDir}/VERSION")
+		get_version_from_file(myVersion "${myDir}/VERSION")
 		set(myTarget      "${myName}")
 		set(myInstLibsDir "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
 		set(myInstDataDir "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
-		MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+		make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+		skirmish_ai_message(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 		# Install the data files
 		install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstDataDir})
 		install(DIRECTORY "${myDir}/src/" DESTINATION ${myInstDataDir} FILES_MATCHING PATTERN REGEX ".*\\.py$")
 		# Install the library
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigurePythonSkirmishAI)
+endmacro (configure_python_skirmish_ai)
 
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
@@ -90,22 +90,22 @@ if    (AI_TYPES_PYTHON AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 endif (AI_TYPES_PYTHON AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
-FIND_PACKAGE(PythonInterp)
-FIND_PACKAGE(PythonLibs)
+find_package(PythonInterp)
+find_package(PythonLibs)
 
 # Check dependencies of the interface are met
 if    (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
-	SetGlobal(BUILD_PYTHON_AIINTERFACE TRUE)
+	set_global(BUILD_PYTHON_AIINTERFACE TRUE)
 else  (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
-	SetGlobal(BUILD_PYTHON_AIINTERFACE FALSE)
+	set_global(BUILD_PYTHON_AIINTERFACE FALSE)
 	message ("warning: Python AI Interface will not be built!")
 endif (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 
 # Build
 if    (BUILD_PYTHON_AIINTERFACE)
-	GetVersionFromFile(myVersion ${myDir}/VERSION)
+	get_version_from_file(myVersion ${myDir}/VERSION)
 
-	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+	include_directories(${PYTHON_INCLUDE_PATH})
 	set(myTarget      "${myName}-AIInterface")
 	set(myNullPython  "NullPythonAI")
 	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
@@ -115,13 +115,13 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	set(myBuilderDir "${CMAKE_CURRENT_BINARY_DIR}/src-generated-builder")
 	set(engineHeadersDir "${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface")
 
-	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
+	make_absolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
-	AIInterfaceMessage(STATUS "Found Skirmish AI: ${myNullPython} ${myVersion}") # SkirmishAIMessage() not defined here
+	ai_interface_message(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
+	ai_interface_message(STATUS "Found Skirmish AI: ${myNullPython} ${myVersion}") # skirmish_ai_message() not defined here
 
-	SetGlobal(PYTHON_AIINTERFACE_VERS   ${myVersion})
-	SetGlobal(PYTHON_AIINTERFACE_TARGET ${myTarget})
+	set_global(PYTHON_AIINTERFACE_VERS   ${myVersion})
+	set_global(PYTHON_AIINTERFACE_TARGET ${myTarget})
 	set(builderFiles
 			"template/__init__.py"
 			"template/context.py"
@@ -141,10 +141,10 @@ if    (BUILD_PYTHON_AIINTERFACE)
 			"generator.py"
 			"event_parser.py"
 			"callback_parser.py")
-	FOREACH (FILE ${builderFiles})
+	foreach (FILE ${builderFiles})
 		list (APPEND myGeneratedFilesSourceDir "builder/${FILE}")
 		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
-	ENDFOREACH(FILE)
+	endforeach(FILE)
 	set(myGenerateFiles
 			${myGeneratedFilesmyBuilderDir}
 			"${engineHeadersDir}/SSkirmishAICallback.h"
@@ -172,14 +172,14 @@ if    (BUILD_PYTHON_AIINTERFACE)
 		OUTPUT "${myGeneratedDir}/PyAI/interface.py"
 		DEPENDS ${myGenerateFiles}
 	)
-	SET_DIRECTORY_PROPERTIES(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
+	set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "src/ai.c;src/PyAI/interface.py")
 	set_source_files_properties("${myGeneratedDir}/ai.c" PROPERTIES GENERATED TRUE)
 	set_source_files_properties(${myGeneratedFilesmyBuilderDir} PROPERTIES GENERATED TRUE)
 
 	aux_source_directory(${mySourceDir} mySources)
-	INCLUDE_DIRECTORIES(${mySourceDir})
+	include_directories(${mySourceDir})
 	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC} "${myGeneratedDir}/ai.c")
-	FixLibName(${myTarget})
+	fix_lib_name(${myTarget})
 
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
