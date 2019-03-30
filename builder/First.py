@@ -10,7 +10,7 @@ def merge_sort(unsorted_list):
     right_list = merge_sort(right_list)
     return list(merge(left_list, right_list))
 
-# Merge the sorted halves
+# Merge the sorted halves3
 
 def merge(left_half,right_half):
 
