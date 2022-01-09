@@ -46,10 +46,10 @@ macro    (configure_python_skirmish_ai)
 	# Check if the user wants to compile the AI
 	if    (BUILD_PYTHON_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_PYTHON_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	else ()
 		set(BUILD_THIS_SKIRMISHAI FALSE)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (BUILD_PYTHON_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
+	endif ()
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -66,7 +66,7 @@ macro    (configure_python_skirmish_ai)
 		install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstDataDir})
 		install(DIRECTORY "${myDir}/src/" DESTINATION ${myInstDataDir} FILES_MATCHING PATTERN REGEX ".*\\.py$")
 		# Install the library
-	endif (BUILD_THIS_SKIRMISHAI)
+	endif ()
 endmacro (configure_python_skirmish_ai)
 
 ### END: MACROS_AND_FUNCTIONS
@@ -81,13 +81,13 @@ set(mySourceDirRel    "src")
 # Check if the user wants to compile the interface
 if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "PYTHON")
 	set(AI_TYPES_PYTHON TRUE)
-else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "PYTHON")
+else ()
 	set(AI_TYPES_PYTHON FALSE)
-endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "PYTHON")
+endif ()
 
 if    (AI_TYPES_PYTHON AND myName MATCHES "${AI_EXCLUDE_REGEX}")
 	set(AI_TYPES_PYTHON FALSE)
-endif (AI_TYPES_PYTHON AND myName MATCHES "${AI_EXCLUDE_REGEX}")
+endif ()
 
 
 find_package(PythonInterp)
@@ -96,10 +96,10 @@ find_package(PythonLibs)
 # Check dependencies of the interface are met
 if    (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
 	set_global(BUILD_PYTHON_AIINTERFACE TRUE)
-else  (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
+else ()
 	set_global(BUILD_PYTHON_AIINTERFACE FALSE)
 	message ("warning: Python AI Interface will not be built!")
-endif (PYTHONINTERP_FOUND AND PYTHONLIBS_FOUND AND AI_TYPES_PYTHON)
+endif ()
 
 # Build
 if    (BUILD_PYTHON_AIINTERFACE)
@@ -194,4 +194,4 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	install(DIRECTORY  "${myDir}/${myNullPython}/src/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.py$")
 	install(DIRECTORY  "${myDir}/${myNullPython}/data/" DESTINATION "${myInstAIDir}" FILES_MATCHING PATTERN REGEX ".*\\.lua$")
 
-endif (BUILD_PYTHON_AIINTERFACE)
+endif ()
