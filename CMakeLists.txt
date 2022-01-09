@@ -67,7 +67,7 @@ macro    (configure_python_skirmish_ai)
 		install(DIRECTORY "${myDir}/src/" DESTINATION ${myInstDataDir} FILES_MATCHING PATTERN REGEX ".*\\.py$")
 		# Install the library
 	endif ()
-endmacro (configure_python_skirmish_ai)
+endmacro ()
 
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
@@ -144,7 +144,7 @@ if    (BUILD_PYTHON_AIINTERFACE)
 	foreach (FILE ${builderFiles})
 		list (APPEND myGeneratedFilesSourceDir "builder/${FILE}")
 		list (APPEND myGeneratedFilesmyBuilderDir "${myBuilderDir}/${FILE}")
-	endforeach(FILE)
+	endforeach ()
 	set(myGenerateFiles
 			${myGeneratedFilesmyBuilderDir}
 			"${engineHeadersDir}/SSkirmishAICallback.h"
